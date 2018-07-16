@@ -27,12 +27,53 @@ Scenario engine for PowerScan (Datalogic scanner)
 Each scenario is described in the class, This class is loaded by the setuptools 
 entry point ``powerscan.scenario``.
 
+AnyBlok is released under the terms of the `Mozilla Public License`.
+
+Installation of powerscan_scenario
+----------------------------------
+
+This project is open source the package can be installed from:
+
+* `pip <http://pypi.python.org/pypi/pip>`_ or a similar tool::
+  ::
+
+      pip install powerscan_scenario
+
+* source on github
+  ::
+
+      git clone git@github.com:anybox/powerscan_scenario.git
+      cd powerscan_scenario
+      python setup.py install
+
+Running Tests
+-------------
+
+To run tests with ``nose``::
+
+    pip install nose
+    nosetests powerscan_scenario/tests
+
+Dependencies
+------------
+
+The install process will ensure that `SQLAlchemy <http://www.sqlalchemy.org>`_, 
+`Alembic <http://alembic.readthedocs.org/>`_,
+`SQLAlchemy-Utils <http://sqlalchemy-utils.readthedocs.org/>`_ are installed, 
+in addition to other dependencies.
+
+The latest version of them is strongly recommended.
+
+The integrator choose the BBD to use by powerscan
+
 Define a new scenario
 ---------------------
 
 Each scenario have to inherit from **powerscan_scenario.Scenario**.
 
 ::
+
+    # module.path.myscenario.py
 
     from powerscan_scenario.scenario import Scenario
 
@@ -41,6 +82,19 @@ Each scenario have to inherit from **powerscan_scenario.Scenario**.
         version = '1.0.0'
         label = 'My scenario'
 
+    //
+    # setup.py
+    setup(
+        ...
+        entry_points=[
+            'myscenario=module.path.myscenario:MyScenario',
+        ]
+    )
+
+.. note::
+
+    The name of the entry point is the code of the scenario, This code is the primary key
+    of the table **scenario**
 
 These attributes are saved in the table **scenario**, and are required
 
@@ -171,11 +225,35 @@ The step method return a dict with some key, this dict over writting their defau
 |                      |   a Menu of selected action by buttons                    |
 |                      | * **quantity** or Scenario.Quantity : The display is seen |
 |                      |   as a confirmation of the quantity:                      |
+|                      |                                                           |
+|                      |   + **<** or Scenario.LeftButton: decrease the quantity   |
+|                      |   + **=** or Scenario.MiddleButton: confirm the quantity  |
+|                      |   + **>** or Scenario.RightButton: increase the quantity  |
+|                      |                                                           |
 |                      | * **scan** or Scenario.Scan : The display is seen as      |
-|                      |   an ask, and the return waiting is a barcode             |
+|                      |   an ask, and the return waiting is a barcode (default)   |
+|                      | * **confirm** or Scenario.Confirm : The display is seen   |
+|                      |   as an ask and button as answer, the buttons must be     |
+|                      |   defined                                                 |
+|                      | * **stop** or Scenario.Stop : Stop the current job and    |
+|                      |  return the available scenario                            |
 +----------------------+-----------------------------------------------------------+
-| entry                | entry received from the scanner                           |
+| sound                | Sound played at this step:                                |
+|                      |                                                           |
+|                      | * **shorthight** or Scenario.ShortHight                   |
+|                      | * **shortlow** or Scenario.ShortLow                       |
+|                      | * **longlow** or Scenario.LongLow                         |
+|                      | * **goodread** or Scenario.GoodRead (default)             |
+|                      | * **badread** or Scenario.BadRead                         |
 +----------------------+-----------------------------------------------------------+
 
+Author
+------
 
-AnyBlok is released under the terms of the `Mozilla Public License`.
+Jean-Sébastien Suzanne
+
+CHANGELOG
+---------
+
+1.0.0 (not released)
+~~~~~~~~~~~~~~~~~~~~
