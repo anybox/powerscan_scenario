@@ -43,6 +43,7 @@ Each scenario have to inherit from **powerscan_scenario.Scenario**.
 
 
 These attributes are saved in the table **scenario**, and are required
+
 +----------------------+-----------------------------------------------------------+
 | Attribute            | Description                                               |
 +======================+===========================================================+
@@ -52,6 +53,7 @@ These attributes are saved in the table **scenario**, and are required
 +----------------------+-----------------------------------------------------------+
 
 Some hooks can be overwritten 
+
 +-----------------------------------------+--------------------------------------------------------------+
 | Method                                  | Description                                                  |
 +=========================================+==============================================================+
@@ -108,6 +110,7 @@ The decorator **powerscan_scenario.decorator.step** is a helper to define a step
             }
 
 These parameters of decorator are saved in the table **step**
+
 +----------------------+-----------------------------------------------------------+
 | parameter            | Description                                               |
 +======================+===========================================================+
@@ -127,6 +130,7 @@ These parameters of decorator are saved in the table **step**
 +----------------------+-----------------------------------------------------------+
 
 The parameters of step method are
+
 +----------------------+-----------------------------------------------------------+
 | parameter            | Description                                               |
 +======================+===========================================================+
@@ -141,6 +145,7 @@ The parameters of step method are
 +----------------------+-----------------------------------------------------------+
 
 The step method return a dict with some key, this dict over writting their default values
+
 +----------------------+-----------------------------------------------------------+
 | key                  | Description                                               |
 +======================+===========================================================+
