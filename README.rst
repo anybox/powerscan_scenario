@@ -247,6 +247,71 @@ The step method return a dict with some key, this dict over writting their defau
 |                      | * **badread** or Scenario.BadRead                         |
 +----------------------+-----------------------------------------------------------+
 
+
+Add transition between steps
+----------------------------
+
+The decorator **powerscan_scenario.decorator.transition** is a helper to define a transition between steps
+
+::
+
+    from powerscan_scenario.scenario import Scenario
+    from powerscan_scenario.decorator import step
+    from powerscan_scenario.decorator import transition
+
+
+    class MyScenario(Scenario):
+        version = '1.0.0'
+        label = 'My scenario'
+
+        @step()
+        def foo(self, session, job, scanner, entry):
+            # action to do
+
+        @step()
+        def bar(self, session, job, scanner, entry):
+            # action to do
+
+        @transition(from=[foo], to=bar, sequence=1)
+        def check_transition_from_foo_to_var(self, session, job, scanner, entry):
+            return ...  # True or False
+
+These parameters of decorator are saved in the table **transition**
+
++----------------------+-----------------------------------------------------------+
+| parameter            | Description                                               |
++======================+===========================================================+
+| code                 | name of the transition for this scenario, if empty the    |
+|                      | code is the name of the method                            |
++----------------------+-----------------------------------------------------------+
+| from                 | name of the steps before the transition, If the value is  |
+|                      | None then all the step will be selected                   |
++----------------------+-----------------------------------------------------------+
+| to                   | name of the step targeting by the transition              |
++----------------------+-----------------------------------------------------------+
+| sequence             | number use to order the transition for the senario        |
++----------------------+-----------------------------------------------------------+
+
+The parameters of step method are
+
++----------------------+-----------------------------------------------------------+
+| parameter            | Description                                               |
++======================+===========================================================+
+| session              | An instance of a SQLAlchemy Session                       |
++----------------------+-----------------------------------------------------------+
+| job                  | The instance of the current job                           |
++----------------------+-----------------------------------------------------------+
+| scanner              | The instance of the scanner which have given the entry    |
+|                      | data                                                      |
++----------------------+-----------------------------------------------------------+
+| entry                | entry received from the scanner                           |
++----------------------+-----------------------------------------------------------+
+
+the method must return a boolean:
+
+* True: The transition is checked, the step targeting will be executed
+* False: pass to the next transition
+
 Author
 ------
 
