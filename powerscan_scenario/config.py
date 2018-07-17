@@ -93,9 +93,13 @@ def add_scenario_argparse_config(parser, default_configuration):
                        help="Relative path of the config file")
     group.add_argument('-p', '--serial-port', dest='serial_port',
                        help="Serial port used by the scanner")
+    group.add_argument(
+        '-b', '--serial-baudrate', dest='serial_baudrate', type=int,
+        help="baudrate used by the connection with scanner base")
     group.add_argument('-u', '--sqlalchemy-url', dest='sqlalchemy_url',
                        help="SQLAlchemy url to connect to the database")
-    default_configuration.update(dict(serial_port='/dev/ttyUSB0'))
+    default_configuration.update(dict(serial_port='/dev/ttyUSB0',
+                                      serial_baudrate=38400))
 
 
 def add_config_argparse_config(parser, default_configuration):
@@ -104,8 +108,12 @@ def add_config_argparse_config(parser, default_configuration):
                        help="Relative path of the config file")
     group.add_argument('-p', '--serial-port', dest='serial_port',
                        help="Serial port used by the scanner")
+    group.add_argument(
+        '-b', '--serial-baudrate', dest='serial_baudrate', type=int,
+        help="baudrate used by the connection with scanner base")
     group.add_argument('-s', '--scanner-code', dest='scanner_code',
                        help="Code of the scanner")
     group.add_argument('-k', '--scanner-configfile', dest='scanner_configfile',
                        help="Relative path of the config file for the scanner")
-    default_configuration.update(dict(serial_port='/dev/ttyUSB0'))
+    default_configuration.update(dict(serial_port='/dev/ttyUSB0',
+                                      serial_baudrate=38400))

@@ -84,6 +84,12 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * default : /dev/ttyUSB0                                  |
 |                      | * configfile key : serial_port                            |
 +----------------------+-----------------------------------------------------------+
+| -b --serial-baudrate | define baudrate to the connection with the scanner base   |
+|                      |                                                           |
+|                      | * default : 38400                                         |
+|                      | * type : int                                              |
+|                      | * configfile key : serial_baudrate                        |
++----------------------+-----------------------------------------------------------+
 | -u --sqlalchemy-url  | url for sqlalchemy database                               |
 |                      |                                                           |
 |                      | * default :                                               |
@@ -307,7 +313,7 @@ The step method return a dict with some key, this dict over writting their defau
 | key                  | Description                                               |
 +======================+===========================================================+
 | display              | List of String, to display on the screen of the scanner,  |
-|                      | Each line is limited by X characters                      |
+|                      | Each line is limited by 16 characters                     |
 |                      |                                                           |
 |                      | The maximum size can be decreased by the action_type      |
 |                      | **confirm** or definition of buttons key                  |
@@ -318,7 +324,8 @@ The step method return a dict with some key, this dict over writting their defau
 |                      | * **=** or Scenario.MiddleButton                          |
 |                      | * **>** or Scenario.RightButton                           |
 |                      |                                                           |
-|                      | The value is the label to display, the maximum size is X  |
+|                      | The value is the label to display, the maximum size is 5  |
+|                      | for **<** and **>**, and only 4 for **=**                 |
 +----------------------+-----------------------------------------------------------+
 | action_type          | Defined the type of action wanted for the user            |
 |                      |                                                           |

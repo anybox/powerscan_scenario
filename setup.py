@@ -20,6 +20,7 @@ requires = [
     'sqlalchemy-utils',
     'argparse',
     'alembic',
+    'pySerial',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
