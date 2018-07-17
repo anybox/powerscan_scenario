@@ -184,9 +184,11 @@ Each scenario have to inherit from **powerscan_scenario.Scenario**.
     # setup.py
     setup(
         ...
-        entry_points=[
-            'myscenario=module.path.myscenario:MyScenario',
-        ]
+        entry_points={
+            'powerscan_scenario.scenario': [
+                'myscenario=module.path.myscenario:MyScenario',
+            ],
+        }
     )
 
 .. note::
