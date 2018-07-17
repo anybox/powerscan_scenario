@@ -81,6 +81,7 @@ Each scenario have to inherit from **powerscan_scenario.Scenario**.
     class MyScenario(Scenario):
         version = '1.0.0'
         label = 'My scenario'
+        sequence = 1
 
     //
     # setup.py
@@ -105,13 +106,15 @@ These attributes are saved in the table **scenario**, and are required
 +----------------------+-----------------------------------------------------------+
 | label                | label of the scenario display on the scaner screen        |
 +----------------------+-----------------------------------------------------------+
+| sequence             | Order the scenario in the available scenario list (100)   |
++----------------------+-----------------------------------------------------------+
 
 Some hooks can be overwritten 
 
 +-----------------------------------------+--------------------------------------------------------------+
 | Method                                  | Description                                                  |
 +=========================================+==============================================================+
-| create_tables (session)                 | * session : an instance of SQLAlchemy Session instance.      |
+| create_models (SQLAbase)                | * SQLAbase : The Base class of SQLAlchemy to define a Model. |
 |                                         |                                                              |
 |                                         | Called when the scenario is added in the table of            |
 |                                         | **scenario**, The scenario can create some table for this    |
@@ -152,6 +155,7 @@ The decorator **powerscan_scenario.decorator.step** is a helper to define a step
     class MyScenario(Scenario):
         version = '1.0.0'
         label = 'My scenario'
+        sequence = 1
 
         @step()
         def foo(self, session, job, scanner, entry):
@@ -263,6 +267,7 @@ The decorator **powerscan_scenario.decorator.transition** is a helper to define 
     class MyScenario(Scenario):
         version = '1.0.0'
         label = 'My scenario'
+        sequence = 1
 
         @step()
         def foo(self, session, job, scanner, entry):
@@ -272,7 +277,7 @@ The decorator **powerscan_scenario.decorator.transition** is a helper to define 
         def bar(self, session, job, scanner, entry):
             # action to do
 
-        @transition(from=[foo], to=bar, sequence=1)
+        @transition(from=['foo'], to='bar', sequence=1)
         def check_transition_from_foo_to_var(self, session, job, scanner, entry):
             return ...  # True or False
 
@@ -311,6 +316,174 @@ the method must return a boolean:
 
 * True: The transition is checked, the step targeting will be executed
 * False: pass to the next transition
+
+Existing SQLAlchemy's models
+----------------------------
+
+**powerscan_scenario.models.Scenario**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This model saved the scenario coming from the entry points ``powerscan_scenario.scenario``.
+
+.. warning::
+
+    This model is readonly, the data can not be modify by the ORM.
+
+**powerscan_scenario.models.Step**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This model saved the step coming from the decorator step.
+
+.. warning::
+
+    This model is readonly, the data can not be modify by the ORM.
+
+**powerscan_scenario.models.Transition**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This model saved the transition coming from the decorator transition.
+
+.. warning::
+
+    This model is readonly, the data can not be modify by the ORM.
+
+**powerscan_scenario.models.Job**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This model saved the job for one scenario.
+
+.. warning::
+
+    This model is readonly, only the column properties (json) is available to write.
+
+**powerscan_scenario.models.Scanner**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This model saved the scanner used in one job. The entries is created by powerscan_scenario.
+
+.. warning::
+
+    This model is readonly, only the column properties (json) is available to write.
+
+Example **Put products to their location in a warehouse**
+---------------------------------------------------------
+
+::
+
+    from powerscan_scenario.scenario import Scenario
+    from powerscan_scenario.decorator import step
+    from powerscan_scenario.decorator import transition
+    from sqlalchemy import Column, String, Integer, relationship
+    from .api import get_data, send_data
+
+
+    class PutProductInLocation(Scenario):
+        version = '1.0.0'
+        label = 'Move products'
+        sequence = 100
+        stop_code = '.....'
+
+        def create_models(self, SQLAbase):
+
+            class ProductLocation(SQLAbase):
+                job_id = Column(Integer, nullable=False, ForeignKey('job.id')
+                job = relationship('Job')
+                product = Column(String, nullable=False, primary_key=True)
+                location = Column(String, nullable=False)
+                location_label = Column(String, nullable=False)
+                quantity = Column(Integer)
+                quantity_count = Column(Integer, default=0)
+
+            self.ProductLocation = ProductLocation
+
+        def initialize_job(self, session, job):
+            for (product, location, location_label, quantity) in get_data():
+                session.add(self.ProductLocation(
+                    job=job, product=product, location=location, 
+                    location_label=location_label, quantity=quantity))
+
+        def release_job(self, session, job):
+            query = session.query([self.ProductLocation]).filter_by(job=job)
+            send_data([
+                (x.product, x.location, x.quantity_count)
+                for x in query.filter_by(job=job).all()])
+
+            query.delete()
+
+        @step(is_started_step=True)
+        def scan_product(self, session, job, scanner, entry):
+            if entry:
+                # come from step scan_location
+                query = session.query([self.ProductLocation])
+                query = query.filter(self.ProductLocation.job == job)
+                query = query.filter(self.ProductLocation.product == scanner.properties['product'])
+                query = query.filter(self.ProductLocation.location == scanner.properties['location'])
+                query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
+                line = query.first()
+                line.quantity_count += 1
+
+            scanner.properties = {'location_label': '', 'product': '', location: ''}
+            return {
+                'display': ['Scan a product'],
+            }
+
+        @step(is_started_step=True)
+        def scan_another_product(self, session, job, scanner, entry):
+            return {
+                'display': ['Scan a product'],
+                'sound': self.BadRead,
+            }
+
+        @step()
+        def scan_location(self, session, job, scanner, entry):
+            sound = self.BadRead
+            if not scanner.properties['location_label']:
+                query = session.query([self.ProductLocation])
+                query = query.filter(self.ProductLocation.job == job)
+                query = query.filter(self.ProductLocation.product == scanner.properties['product'])
+                query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
+                line = query.first()
+
+                scanner.properties.update({'location_label': line.location_label, location: line.location})
+                sound = self.GoodRead
+
+            return {
+                'display': ['Scan the location', scanner.properties['location_label']],
+                'sound': sound,
+            }
+
+        @step()
+        def stop(self, session, job, scanner, entry):
+            return {'action_type': cls.Stop}
+
+        @transition(from=['scan_product'], to='stop', sequence=1)
+        def transition_stop(self, session, job, scanner, entry):
+            return entry == self.stop_code
+
+        @transition(from=['scan_product', 'scan_another_product'], to='scan_location', sequence=2)
+        def transition_product_ok(self, session, job, scanner, entry):
+            query = session.query([self.ProductLocation])
+            query = query.filter(self.ProductLocation.job == job)
+            query = query.filter(self.ProductLocation.product == entry)
+            query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
+            return query.count() > 0
+
+        @transition(from=['scan_product', 'scan_another_product'], to='scan_another_product', sequence=3)
+        def transition_product_ko(self, session, job, scanner, entry):
+            return True
+
+        @transition(from=['scan_location'], to='scan_product', sequence=1)
+        def transition_location_ok(self, session, job, scanner, entry):
+            query = session.query([self.ProductLocation])
+            query = query.filter(self.ProductLocation.job == job)
+            query = query.filter(self.ProductLocation.product == scanner.properties['product'])
+            query = query.filter(self.ProductLocation.location == entry)
+            query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
+            return query.count() > 0
+
+        @transition(from=['scan_location'], to='scan_location', sequence=2)
+        def transition_product_ko(self, session, job, scanner, entry):
+            return True
 
 Author
 ------
