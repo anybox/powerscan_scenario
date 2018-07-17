@@ -89,7 +89,7 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * default :                                               |
 |                      | * configfile key : sqlalchemy_url                         |
 +----------------------+-----------------------------------------------------------+
-| --logging-level      | logging level general status                              |
+| -l --logging-level   | logging level general status                              |
 |                      |                                                           |
 |                      | * default : INFO                                          |
 |                      | * choices :                                               |

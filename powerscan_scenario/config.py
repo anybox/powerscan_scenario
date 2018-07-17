@@ -58,9 +58,11 @@ class Configuration(dict):
         cparser.read(configfile)
         sections = cparser.items(self.configfile_section)
         for opt, value in sections:
-            self[opt] = value
+            if value:
+                self[opt] = value
 
     def update(self, dict2):
+        dict2 = dict([(x, y) for x, y in dict2.items() if y is not None])
         if 'configfile' in dict2:
             configfile = os.path.abspath(dict2['configfile'])
             self.parse_configfile(configfile)
@@ -77,7 +79,7 @@ def get_argparse_config_from_entrypoint(parser, entry_point,
 
 def add_logging_argparse_config(parser, default_configuration):
     group = parser.add_argument_group('Powerscan logging')
-    group.add_argument('--logging-level', dest='logging_level',
+    group.add_argument('-l', '--logging-level', dest='logging_level',
                        choices=['NOTSET', 'DEBUG', 'INFO', 'WARNING',
                                 'ERROR', 'CRITICAL'])
     group.add_argument('--logging-configfile', dest='logging_configfile',
