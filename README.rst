@@ -66,6 +66,65 @@ The latest version of them is strongly recommended.
 
 The integrator choose the BBD to use by powerscan
 
+Console script
+--------------
+
+powerscan_scenario
+~~~~~~~~~~~~~~~~~~
+
+This script load the scenario(s) from the entry points  and loop to wait the scan from scanners to play job from scenario
+
++----------------------+-----------------------------------------------------------+
+| option               | Description                                               |
++======================+===========================================================+
+| -c --configfile      | file of configuration, part [POWERSCAN_SCENARIO]          |
++----------------------+-----------------------------------------------------------+
+| -p --serial-port     | define which serial port to use                           |
+|                      |                                                           |
+|                      | * default : /dev/ttyUSB0                                  |
+|                      | * configfile key : serial_port                            |
++----------------------+-----------------------------------------------------------+
+| -u --sqlalchemy-url  | url for sqlalchemy database                               |
+|                      |                                                           |
+|                      | * default :                                               |
+|                      | * configfile key : sqlalchemy_url                         |
++----------------------+-----------------------------------------------------------+
+
+.. note::
+
+    The entry point ``powerscan_scenario.argparse`` allow to improve the configuration
+
+powerscan_config
+~~~~~~~~~~~~~~~~
+
+This script load the configuration into a scanner
+
++-------------------------+-----------------------------------------------------------+
+| option                  | Description                                               |
++=========================+===========================================================+
+| -c --configfile         | file of configuration, part [POWERSCAN_CONFIG]            |
++-------------------------+-----------------------------------------------------------+
+| -p --serial-port        | define which serial port to use                           |
+|                         |                                                           |
+|                         | * default : /dev/ttyUSB0                                  |
+|                         | * configfile key : serial_port                            |
++-------------------------+-----------------------------------------------------------+
+| -s --scanner-code       | scanner code of the scanner                               |
+|                         |                                                           |
+|                         | * default :                                               |
+|                         | * configfile key : scanner_code                           |
++-------------------------+-----------------------------------------------------------+
+| -p --scanner-configfile | file of configuration of the scanner                      |
+|                         |                                                           |
+|                         | * default :                                               |
+|                         | * configfile key : scanner_configfile                     |
++-------------------------+-----------------------------------------------------------+
+
+.. warning::
+
+    TODO miss available option for **--scanner-configfile**
+
+
 Define a new scenario
 ---------------------
 
