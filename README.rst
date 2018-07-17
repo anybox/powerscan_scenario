@@ -89,6 +89,25 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * default :                                               |
 |                      | * configfile key : sqlalchemy_url                         |
 +----------------------+-----------------------------------------------------------+
+| --logging-level      | logging level general status                              |
+|                      |                                                           |
+|                      | * default : INFO                                          |
+|                      | * choices :                                               |
+|                      |                                                           |
+|                      |   + NOTSET                                                |
+|                      |   + DEBUG                                                 |
+|                      |   + INFO                                                  |
+|                      |   + WARNING                                               |
+|                      |   + ERROR                                                 |
+|                      |   + CRITICAL                                              |
+|                      |                                                           |
+|                      | * configfile key : logging_level                          |
++----------------------+-----------------------------------------------------------+
+| --logging-configfile | file of configuration for python logging                  |
+|                      |                                                           |
+|                      | * default :                                               |
+|                      | * configfile key : logging_configfile                     |
++----------------------+-----------------------------------------------------------+
 
 .. note::
 
@@ -109,15 +128,34 @@ This script load the configuration into a scanner
 |                         | * default : /dev/ttyUSB0                                  |
 |                         | * configfile key : serial_port                            |
 +-------------------------+-----------------------------------------------------------+
-| -s --scanner-code       | scanner code of the scanner                               |
+| -s --scanner-code       | code of the scanner                                       |
 |                         |                                                           |
 |                         | * default :                                               |
 |                         | * configfile key : scanner_code                           |
 +-------------------------+-----------------------------------------------------------+
-| -p --scanner-configfile | file of configuration of the scanner                      |
+| -k --scanner-configfile | file of configuration of the scanner                      |
 |                         |                                                           |
 |                         | * default :                                               |
 |                         | * configfile key : scanner_configfile                     |
++-------------------------+-----------------------------------------------------------+
+| --logging-level         | logging level general status                              |
+|                         |                                                           |
+|                         | * default : INFO                                          |
+|                         | * choices :                                               |
+|                         |                                                           |
+|                         |   + NOTSET                                                |
+|                         |   + DEBUG                                                 |
+|                         |   + INFO                                                  |
+|                         |   + WARNING                                               |
+|                         |   + ERROR                                                 |
+|                         |   + CRITICAL                                              |
+|                         |                                                           |
+|                         | * configfile key : logging_level                          |
++-------------------------+-----------------------------------------------------------+
+| --logging-configfile    | file of configuration for python logging                  |
+|                         |                                                           |
+|                         | * default :                                               |
+|                         | * configfile key : logging_configfile                     |
 +-------------------------+-----------------------------------------------------------+
 
 .. warning::

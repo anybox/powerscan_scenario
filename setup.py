@@ -58,8 +58,14 @@ setup(
             'powerscan_scenario=powerscan_scenario.scripts:powerscan_scenario',
             'powerscan_config=powerscan_scenario.scripts:powerscan_config',
         ],
-        'powerscan_scenario.argparse': [],
-        'powerscan_config.argparse': [],
+        'powerscan_scenario.argparse': [
+            'conf=powerscan_scenario.config:add_scenario_argparse_config',
+            'log=powerscan_scenario.config:add_logging_argparse_config',
+        ],
+        'powerscan_config.argparse': [
+            'conf=powerscan_scenario.config:add_config_argparse_config',
+            'log=powerscan_scenario.config:add_logging_argparse_config',
+        ],
         'powerscan_scenario.scenario': [],
     },
     extras_require={},
