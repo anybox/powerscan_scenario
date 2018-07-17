@@ -10,11 +10,33 @@ from logging import getLogger
 import os
 from os.path import isfile
 from configparser import ConfigParser
+from logging import (config, NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL,
+                     basicConfig)
 logger = getLogger(__name__)
+
+LEVELS = {
+    'NOTSET': NOTSET,
+    'DEBUG': DEBUG,
+    'INFO': INFO,
+    'WARNING': WARNING,
+    'ERROR': ERROR,
+    'CRITICAL': CRITICAL
+}
 
 
 class ConfigurationException(Exception):
     pass
+
+
+def initialize_logging(Configuration):
+    level = LEVELS.get(Configuration.get('logging_level'))
+    logging_configfile = Configuration.get('logging_configfile')
+
+    if logging_configfile:
+        config.fileConfig(logging_configfile)
+
+    if level:
+        basicConfig(level=level)
 
 
 class Configuration(dict):
