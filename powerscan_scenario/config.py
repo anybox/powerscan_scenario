@@ -95,7 +95,8 @@ def add_scenario_argparse_config(parser, default_configuration):
     group.add_argument(
         '-b', '--serial-baudrate', dest='serial_baudrate', type=int,
         help="baudrate used by the connection with scanner base")
-    group.add_argument('-d', '--debug', dest='debug', action='store_true',
+    group.add_argument('-d', '--allow-dev', dest='allow_dev',
+                       action='store_true',
                        help="Allow the scenario in mode dev")
     group.add_argument('-u', '--sqlalchemy-url', dest='sqlalchemy_url',
                        help="SQLAlchemy url to connect to the database")

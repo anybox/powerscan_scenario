@@ -90,10 +90,10 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * type : int                                              |
 |                      | * configfile key : serial_baudrate                        |
 +----------------------+-----------------------------------------------------------+
-| -d --debug           | Allow to use the scenario where **dev** attribute is True |
+| -d --allow-dev       | Allow to use the scenario where **dev** attribute is True |
 |                      |                                                           |
 |                      | * action : store_true                                     |
-|                      | * configfile key : debug                                  |
+|                      | * configfile key : allow_dev                              |
 +----------------------+-----------------------------------------------------------+
 | -u --sqlalchemy-url  | url for sqlalchemy database                               |
 |                      |                                                           |
@@ -214,7 +214,7 @@ These attributes are saved in the table **scenario**, and are required
 +======================+===========================================================+
 | version              | current version of the scenario                           |
 +----------------------+-----------------------------------------------------------+
-| label                | label of the scenario display on the scaner screen        |
+| label                | label of the scenario display on the scaner screen max 16 |
 +----------------------+-----------------------------------------------------------+
 | sequence             | Order the scenario in the available scenario list (100)   |
 +----------------------+-----------------------------------------------------------+
@@ -271,7 +271,7 @@ The decorator **powerscan_scenario.decorator.step** is a helper to define a step
         sequence = 1
 
         @step()
-        def foo(self, session, job, scanner, entry):
+        def foo(self, session, scanner, entry):
             # action to do
             return {
                 'display': [],  # list of string to display
@@ -285,16 +285,16 @@ These parameters of decorator are saved in the table **step**
 +----------------------+-----------------------------------------------------------+
 | parameter            | Description                                               |
 +======================+===========================================================+
-| code                 | name of the step for this scenario, if empty the code is  |
+| name                 | name of the step for this scenario, if empty the code is  |
 |                      | the name of the method                                    |
 +----------------------+-----------------------------------------------------------+
-| is_started_step      | boolean (default False). The scenario must have got one   |
+| is_first_step        | boolean (default False). The scenario must have got one   |
 |                      | and only one step with this attribute to True value       |
 |                      |                                                           |
 |                      | This attribute mean that this step is the first step of   |
 |                      | the scenario                                              |
 +----------------------+-----------------------------------------------------------+
-| is_stoped_step       | boolean (default False). The scenario must have got one   |
+| is_final_step        | boolean (default False). The scenario must have got one   |
 |                      | or more step(s) with this attribute to True value         |
 |                      |                                                           |
 |                      | This attribute mean that this step stop the job           |
@@ -306,8 +306,6 @@ The parameters of step method are
 | parameter            | Description                                               |
 +======================+===========================================================+
 | session              | An instance of a SQLAlchemy Session                       |
-+----------------------+-----------------------------------------------------------+
-| job                  | The instance of the current job                           |
 +----------------------+-----------------------------------------------------------+
 | scanner              | The instance of the scanner which have given the entry    |
 |                      | data                                                      |
@@ -384,15 +382,15 @@ The decorator **powerscan_scenario.decorator.transition** is a helper to define 
         sequence = 1
 
         @step()
-        def foo(self, session, job, scanner, entry):
+        def foo(self, session, scanner, entry):
             # action to do
 
         @step()
-        def bar(self, session, job, scanner, entry):
+        def bar(self, session, scanner, entry):
             # action to do
 
         @transition(from=['foo'], to='bar', sequence=1)
-        def check_transition_from_foo_to_var(self, session, job, scanner, entry):
+        def check_transition_from_foo_to_var(self, session, scanner, entry):
             return ...  # True or False
 
 These parameters of decorator are saved in the table **transition**
@@ -417,8 +415,6 @@ The parameters of step method are
 | parameter            | Description                                               |
 +======================+===========================================================+
 | session              | An instance of a SQLAlchemy Session                       |
-+----------------------+-----------------------------------------------------------+
-| job                  | The instance of the current job                           |
 +----------------------+-----------------------------------------------------------+
 | scanner              | The instance of the scanner which have given the entry    |
 |                      | data                                                      |
@@ -473,7 +469,7 @@ This model saved the job for one scenario.
 **powerscan_scenario.models.Scanner**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This model saved the scanner used in one job. The entries is created by powerscan_scenario.
+This model saved the scanner used for one job. The entries is created by powerscan_scenario.
 
 .. warning::
 
@@ -487,7 +483,8 @@ Example **Put products to their location in a warehouse**
     from powerscan_scenario.scenario import Scenario
     from powerscan_scenario.decorator import step
     from powerscan_scenario.decorator import transition
-    from sqlalchemy import Column, String, Integer, relationship
+    from sqlalchemy import Column, String, Integer
+    from sqlalchemy.orm import relationship
     from .api import get_data, send_data
 
 
@@ -500,6 +497,8 @@ Example **Put products to their location in a warehouse**
         def create_models(self, SQLAbase):
 
             class ProductLocation(SQLAbase):
+                __tablename__ = "product_location"
+
                 job_id = Column(Integer, nullable=False, ForeignKey('job.id')
                 job = relationship('Job')
                 product = Column(String, nullable=False, primary_key=True)
@@ -524,14 +523,14 @@ Example **Put products to their location in a warehouse**
 
             query.delete()
 
-        @step(is_started_step=True)
-        def scan_product(self, session, job, scanner, entry):
+        @step(is_first_step=True)
+        def scan_product(self, session, scanner, entry):
             if entry:
                 # come from step scan_location
                 query = session.query([self.ProductLocation])
-                query = query.filter(self.ProductLocation.job == job)
+                query = query.filter(self.ProductLocation.job == scanner.job)
                 query = query.filter(self.ProductLocation.product == scanner.properties['product'])
-                query = query.filter(self.ProductLocation.location == scanner.properties['location'])
+                query = query.filter(self.ProductLocation.location == entry)
                 query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
                 line = query.first()
                 line.quantity_count += 1
@@ -541,24 +540,24 @@ Example **Put products to their location in a warehouse**
                 'display': ['Scan a product'],
             }
 
-        @step(is_started_step=True)
-        def scan_another_product(self, session, job, scanner, entry):
+        @step(is_first_step=True)
+        def scan_another_product(self, session, scanner, entry):
             return {
                 'display': ['Scan a product'],
                 'sound': self.BadRead,
             }
 
         @step()
-        def scan_location(self, session, job, scanner, entry):
+        def scan_location(self, session, scanner, entry):
             sound = self.BadRead
             if not scanner.properties['location_label']:
                 query = session.query([self.ProductLocation])
-                query = query.filter(self.ProductLocation.job == job)
-                query = query.filter(self.ProductLocation.product == scanner.properties['product'])
+                query = query.filter(self.ProductLocation.job == scanner.job)
+                query = query.filter(self.ProductLocation.product == entry)
                 query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
                 line = query.first()
 
-                scanner.properties.update({'location_label': line.location_label, location: line.location})
+                scanner.properties.update({'location_label': line.location_label, location: line.location, 'product': entry})
                 sound = self.GoodRead
 
             return {
@@ -567,36 +566,31 @@ Example **Put products to their location in a warehouse**
             }
 
         @step()
-        def stop(self, session, job, scanner, entry):
+        def stop(self, session, scanner, entry):
             return {'action_type': cls.Stop}
 
         @transition(from=['scan_product'], to='stop', sequence=1)
-        def transition_stop(self, session, job, scanner, entry):
+        def transition_stop(self, session, scanner, entry):
             return entry == self.stop_code
 
         @transition(from=['scan_product', 'scan_another_product'], to='scan_location', sequence=2)
-        def transition_product_ok(self, session, job, scanner, entry):
+        def transition_product_ok(self, session, scanner, entry):
             query = session.query([self.ProductLocation])
-            query = query.filter(self.ProductLocation.job == job)
+            query = query.filter(self.ProductLocation.job == scanner.job)
             query = query.filter(self.ProductLocation.product == entry)
             query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
             return query.count() > 0
 
         @transition(from=['scan_product', 'scan_another_product'], to='scan_another_product', sequence=3)
-        def transition_product_ko(self, session, job, scanner, entry):
+        def transition_product_ko(self, session, scanner, entry):
             return True
 
         @transition(from=['scan_location'], to='scan_product', sequence=1)
-        def transition_location_ok(self, session, job, scanner, entry):
-            query = session.query([self.ProductLocation])
-            query = query.filter(self.ProductLocation.job == job)
-            query = query.filter(self.ProductLocation.product == scanner.properties['product'])
-            query = query.filter(self.ProductLocation.location == entry)
-            query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
-            return query.count() > 0
+        def transition_location_ok(self, session, scanner, entry):
+            return scanner.properties['location'] == entry
 
         @transition(from=['scan_location'], to='scan_location', sequence=2)
-        def transition_product_ko(self, session, job, scanner, entry):
+        def transition_product_ko(self, session, scanner, entry):
             return True
 
 Author
