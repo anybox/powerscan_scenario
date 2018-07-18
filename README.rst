@@ -90,6 +90,11 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * type : int                                              |
 |                      | * configfile key : serial_baudrate                        |
 +----------------------+-----------------------------------------------------------+
+| -d --debug           | Allow to use the scenario where **dev** attribute is True |
+|                      |                                                           |
+|                      | * action : store_true                                     |
+|                      | * configfile key : debug                                  |
++----------------------+-----------------------------------------------------------+
 | -u --sqlalchemy-url  | url for sqlalchemy database                               |
 |                      |                                                           |
 |                      | * default :                                               |
@@ -212,6 +217,9 @@ These attributes are saved in the table **scenario**, and are required
 | label                | label of the scenario display on the scaner screen        |
 +----------------------+-----------------------------------------------------------+
 | sequence             | Order the scenario in the available scenario list (100)   |
++----------------------+-----------------------------------------------------------+
+| dev                  | Boolean if **True** the scenario will be not displayed in |
+|                      | the menu of the available scenarios list.                 |
 +----------------------+-----------------------------------------------------------+
 
 Some hooks can be overwritten 

@@ -44,7 +44,6 @@ setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -67,7 +66,9 @@ setup(
             'conf=powerscan_scenario.config:add_config_argparse_config',
             'log=powerscan_scenario.config:add_logging_argparse_config',
         ],
-        'powerscan_scenario.scenario': [],
+        'powerscan_scenario.scenario': [
+            'test=powerscan_scenario.tests.scenario:OneScenario',
+        ],
     },
     extras_require={},
 )

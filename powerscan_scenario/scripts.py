@@ -8,6 +8,7 @@
 from .config import (Configuration, get_argparse_config_from_entrypoint,
                      initialize_logging)
 from .scannerbase import ScannerBase
+from .scenario import get_scenarios_from_entry_points
 from argparse import ArgumentParser
 from logging import getLogger
 
@@ -23,10 +24,11 @@ def powerscan_scenario():
     args = parser.parse_args()
     config.update(dict(args._get_kwargs()))
     initialize_logging(config)
+    scenarios = get_scenarios_from_entry_points(config)
     base = ScannerBase(serialport=config.get('serial_port'),
                        baudrate=config.get('serial_baudrate'))
     logger.info("Start powerscan scenario")
-    base
+    base, scenarios
     # TODO get scenarios from entry points
     # TODO initialize db and alter it if need
     # TODO Start ScenarScan

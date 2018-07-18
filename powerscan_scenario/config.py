@@ -6,12 +6,11 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from pkg_resources import iter_entry_points
-from logging import getLogger
 import os
 from os.path import isfile
 from configparser import ConfigParser
 from logging import (config, NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL,
-                     basicConfig)
+                     basicConfig, getLogger)
 logger = getLogger(__name__)
 
 LEVELS = {
@@ -96,6 +95,8 @@ def add_scenario_argparse_config(parser, default_configuration):
     group.add_argument(
         '-b', '--serial-baudrate', dest='serial_baudrate', type=int,
         help="baudrate used by the connection with scanner base")
+    group.add_argument('-d', '--debug', dest='debug', action='store_true',
+                       help="Allow the scenario in mode dev")
     group.add_argument('-u', '--sqlalchemy-url', dest='sqlalchemy_url',
                        help="SQLAlchemy url to connect to the database")
     default_configuration.update(dict(serial_port='/dev/ttyUSB0',
