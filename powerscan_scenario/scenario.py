@@ -36,3 +36,6 @@ class Scenario:
 
     def __init__(self, configuration):
         self.config = configuration
+
+    def create_models(self, SQLBase):
+        pass  # TODO
