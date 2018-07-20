@@ -245,7 +245,10 @@ class DBManager:
 
     def delete_transition(self, transition):
         query = self.session.query(self.Transition)
-        query.filter_by(name=transition).delete()
+        query = query.filter_by(
+            name=transition.name, to_step=transition.to_step,
+            from_step=transition.from_step)
+        query.delete()
 
     def add_transition(self, transition_name, transition):
         self.session.add(self.Transition(
@@ -261,13 +264,13 @@ class DBManager:
         query = query.filter(self.Transition.scenario == scenario.name)
         where_clause = []
         for name, to_step, from_step in transitions:
-            where_clause.append(and_(
+            where_clause.append(~and_(
                 self.Transition.name == name,
                 self.Transition.to_step == to_step,
                 self.Transition.from_step == from_step))
         query = query.filter(or_(*where_clause))
         for transition in query.all():
-            self.delete_transition(transition.name)
+            self.delete_transition(transition)
 
         for transition_name in transitions:
             query = session.query(self.Transition)

@@ -122,3 +122,39 @@ class TestDBManager(TestCase):
             session.flush()
             db.update_all_scenarios()
             self.assertEqual(scenario.version, '1.0.0')
+
+    def test_update_all_scenarios_delete_step(self):
+        url = 'postgresql+psycopg2:///powerscan_scenario'
+        config = {'sqlalchemy_url': url}
+        scenario = OneScenario(config)
+        scenarios = {'test': scenario}
+        drop_and_create_db_if_exist(url)
+        with dbmanager(configuration=config, scenarios=scenarios) as (db,
+                                                                      session):
+            session.add(db.Step(name='test_step', scenario='test',
+                                method_name_on_scenario='test'))
+            session.flush()
+            self.assertTrue(
+                session.query(db.Step).filter_by(name='test_step').count())
+            db.update_all_scenarios()
+            self.assertFalse(
+                session.query(db.Step).filter_by(name='test_step').count())
+
+    def test_update_all_scenarios_delete_transition(self):
+        url = 'postgresql+psycopg2:///powerscan_scenario'
+        config = {'sqlalchemy_url': url}
+        scenario = OneScenario(config)
+        scenarios = {'test': scenario}
+        drop_and_create_db_if_exist(url)
+        with dbmanager(configuration=config, scenarios=scenarios) as (db,
+                                                                      session):
+            session.add(db.Transition(name='test_transition', scenario='test',
+                                      from_step='stop', to_step='stop',
+                                      sequence=1,
+                                      method_name_on_scenario='test'))
+            session.flush()
+            self.assertTrue(session.query(db.Transition).filter_by(
+                name='test_transition').count())
+            db.update_all_scenarios()
+            self.assertFalse(session.query(db.Transition).filter_by(
+                name='test_transition').count())
