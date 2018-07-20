@@ -40,6 +40,7 @@ class DBManager:
         self.metadata.create_all(self.engine)
         session_factory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(session_factory)
+        self.update_all_scenarios()
 
     @property
     def session(self):
@@ -71,7 +72,7 @@ class DBManager:
             sequence = Column(Integer, nullable=False)
             label = Column(String, nullable=False)
             version = Column(String, nullable=False)
-            dev = Column(Boolean, nullable=False)
+            dev = Column(Boolean, default=False)
 
         self.Scenario = Scenario
 
@@ -81,7 +82,8 @@ class DBManager:
             __tablename__ = "step"
 
             name = Column(String, nullable=False, primary_key=True)
-            scenario = Column(String, ForeignKey('scenario.name'),
+            scenario = Column(String,
+                              ForeignKey('scenario.name', ondelete="CASCADE"),
                               primary_key=True, nullable=False)
             is_first_step = Column(Boolean, default=False)
             is_final_step = Column(Boolean, default=False)
@@ -104,10 +106,14 @@ class DBManager:
             __table_args__ = (
                 ForeignKeyConstraint(
                     [scenario, from_step],
-                    [self.Step.scenario, self.Step.name]),
+                    [self.Step.scenario, self.Step.name],
+                    ondelete="CASCADE"
+                ),
                 ForeignKeyConstraint(
                     [scenario, to_step],
-                    [self.Step.scenario, self.Step.name]),
+                    [self.Step.scenario, self.Step.name],
+                    ondelete="CASCADE"
+                ),
             )
 
         self.Transition = Transition
@@ -118,8 +124,9 @@ class DBManager:
             __tablename__ = "job"
 
             id = Column(Integer, primary_key=True, nullable=False)
-            scenario_name = Column(String, ForeignKey('scenario.name'),
-                                   nullable=False)
+            scenario_name = Column(
+                String, ForeignKey('scenario.name', ondelete="RESTRICT"),
+                nullable=False)
             scenario = relationship('Scenario', backref='jobs')
             properties = Column(JSON, default={})
 
@@ -131,17 +138,19 @@ class DBManager:
             __tablename__ = "scanner"
 
             code = Column(Integer, primary_key=True, nullable=False)
-            job_id = Column(Integer, ForeignKey('job.id'), nullable=False)
+            job_id = Column(Integer, ForeignKey('job.id', ondelete='RESTRICT'))
             job = relationship('Job', backref="scanners")
-            scenario = Column(String, nullable=False)
-            step = Column(String, nullable=False)
+            scenario = Column(String)
+            step = Column(String)
             properties = Column(JSON, default={})
             step_result = Column(JSON, default={})
 
             __table_args__ = (
                 ForeignKeyConstraint(
                     [scenario, step],
-                    [self.Step.scenario, self.Step.name]),
+                    [self.Step.scenario, self.Step.name],
+                    ondelete="RESTRICT"
+                ),
             )
 
         self.Scanner = Scanner
@@ -152,6 +161,117 @@ class DBManager:
                 continue
 
             scenario.create_models(self.DBBase)
+
+    def delete_scenario(self, scenario):
+        query = self.session.query(self.Scenario)
+        query.filter_by(name=scenario).delete()
+
+    def add_scenario(self, scenario_name):
+        scenario_ = self.scenarios[scenario_name]
+        session = self.session
+        session.add(self.Scenario(
+            name=scenario_name,
+            **{x: getattr(scenario_, x)
+               for x in ('label', 'sequence', 'version', 'dev')}))
+        session.flush()
+        steps, transitions = scenario_.get_steps_and_transitions()
+        for step in steps:
+            self.add_step(scenario_name, **step)
+
+        session.flush()
+        for transition in transitions:
+            self.add_transition(scenario_name, **transition)
+
+        session.flush()
+
+    def update_scenario(self, scenario):
+        scenario_ = self.scenarios[scenario.name]
+        session = self.session
+        if scenario_.version != scenario.version:
+            scenario_.update_tables(session, scenario.version)
+
+        for attr in ('label', 'sequence', 'version', 'dev'):
+            setattr(scenario, attr, getattr(scenario_, attr))
+
+        steps, transitions = scenario_.get_steps_and_transitions()
+        self.update_all_steps(scenario, steps)
+        self.update_all_transitions(scenario, transitions)
+
+    def update_all_scenarios(self):
+        session = self.session
+        scenarios = list(self.scenarios.keys())
+        query = session.query(self.Scenario)
+        query = query.filter(self.Scenario.name.notin_(scenarios))
+        for scenario in query.all():
+            self.delete_scenario(scenario.name)
+
+        for scenario_name in scenarios:
+            scenario = session.query(self.Scenario).get(scenario_name)
+            if scenario is None:
+                self.add_scenario(scenario_name)
+            else:
+                self.update_scenario(scenario)
+
+    def delete_step(self, step):
+        query = self.session.query(self.Step)
+        query.filter_by(name=step).delete()
+
+    def add_step(self, scenario_name, step):
+        self.session.add(self.Step(
+            name=scenario_name, **step))
+
+    def update_step(self, step, step_definition):
+        for attr in step_definition:
+            setattr(step, attr, step_definition[attr])
+
+    def update_all_steps(self, scenario, steps):
+        session = self.session
+        query = session.query(self.Step)
+        query = query.filter(self.Step.scenario == scenario.name)
+        query = query.filter(self.Step.name.notin_(list(steps.keys())))
+        for step in query.all():
+            self.delete_step(step.name)
+
+        for step_name in steps:
+            query = session.query(self.Step)
+            query = query.filter(self.Step.scenario == scenario.name)
+            query = query.filter(self.Step.name == step_name)
+            step = query.one_or_none()
+            if step is None:
+                self.add_step(scenario.name, steps[step_name])
+            else:
+                self.update_step(step, steps[step_name])
+
+    def delete_transition(self, transition):
+        query = self.session.query(self.Transition)
+        query.filter_by(name=transition).delete()
+
+    def add_transition(self, transition_name, transition):
+        self.session.add(self.Transition(
+            name=transition_name, **transition))
+
+    def update_transition(self, transition, transition_definition):
+        for attr in transition_definition:
+            setattr(transition, attr, transition_definition[attr])
+
+    def update_all_transitions(self, scenario, transitions):
+        session = self.session
+        query = session.query(self.Transition)
+        query = query.filter(self.Transition.scenario == scenario.name)
+        query = query.filter(
+            self.Transition.name.notin_(list(transitions.keys())))
+        for transition in query.all():
+            self.delete_transition(transition.name)
+
+        for transition_name in transitions:
+            query = session.query(self.Transition)
+            query = query.filter(self.Transition.scenario == scenario.name)
+            query = query.filter(self.Transition.name == transition_name)
+            transition = query.one_or_none()
+            if transition is None:
+                self.add_transition(scenario.name, transitions[transition_name])
+            else:
+                self.update_transition(transition, transitions[transition_name])
 
     # def get_contextual_connect(self):
     #     return self.engine.contextual_connect()

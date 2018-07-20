@@ -39,3 +39,12 @@ class Scenario:
 
     def create_models(self, SQLBase):
         pass  # TODO
+
+    def update_tables(self, session, latest_version):
+        pass  # TODO
+
+    def get_steps_and_transitions(self):
+        steps = {}
+        transitions = {}
+
+        return steps, transitions

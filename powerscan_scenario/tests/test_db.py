@@ -11,6 +11,8 @@ import sqlalchemy
 from copy import copy
 from sqlalchemy_utils.functions import database_exists, create_database, orm
 from .scenario import OneScenario
+from contextlib import contextmanager
+from sqlalchemy.exc import IntegrityError
 
 
 def drop_database(url):
@@ -25,6 +27,19 @@ def drop_database(url):
     cnx.close()
 
 
+@contextmanager
+def dbmanager(**kwargs):
+    db = DBManager(**kwargs)
+    session = db.session
+    try:
+        yield db, session
+    finally:
+        session.rollback()
+        session.expunge_all()
+        session.close_all()
+        db.engine.dispose()
+
+
 class TestDBManager(TestCase):
 
     def drop_and_create_db_if_exist(self, url):
@@ -37,12 +52,8 @@ class TestDBManager(TestCase):
         url = 'postgresql+psycopg2:///powerscan_scenario'
         config = {'sqlalchemy_url': url}
         self.drop_and_create_db_if_exist(url)
-        db = DBManager(configuration=config)
-        session = db.session
-        session.query(db.Scenario).count()  # table exist
-        session.expunge_all()
-        session.close_all()
-        db.engine.dispose()
+        with dbmanager(configuration=config) as (db, session):
+            session.query(db.Scenario).count()  # table exist
 
     def test_create_tables_with_missing_sqlalchemy_url(self):
         with self.assertRaises(DBManagerException):
@@ -58,13 +69,11 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         self.drop_and_create_db_if_exist(url)
-        db = DBManager(configuration=config, scenarios=scenarios)
-        session = db.session
-        session.query(db.Scenario).count()  # table exist
+        with dbmanager(configuration=config, scenarios=scenarios) as (db,
+                                                                      session):
+            session.query(db.Scenario).count()  # table exist
+
         self.assertFalse(hasattr(scenario, 'TestProduct'))
-        session.expunge_all()
-        session.close_all()
-        db.engine.dispose()
 
     def test_create_tables_with_dev_scenario_with_allow_dev(self):
         url = 'postgresql+psycopg2:///powerscan_scenario'
@@ -72,11 +81,64 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         self.drop_and_create_db_if_exist(url)
-        db = DBManager(configuration=config, scenarios=scenarios)
-        session = db.session
-        session.query(db.Scenario).count()  # table exist
-        self.assertTrue(hasattr(scenario, 'TestProduct'))
-        session.query(scenario.TestProduct).count()  # table exist
-        session.expunge_all()
-        session.close_all()
-        db.engine.dispose()
+        with dbmanager(configuration=config, scenarios=scenarios) as (db,
+                                                                      session):
+            session.query(db.Scenario).count()  # table exist
+            self.assertTrue(hasattr(scenario, 'TestProduct'))
+            session.query(scenario.TestProduct).count()  # table exist
+
+    def test_update_all_scenarios(self):
+        url = 'postgresql+psycopg2:///powerscan_scenario'
+        config = {'sqlalchemy_url': url}
+        self.drop_and_create_db_if_exist(url)
+        with dbmanager(configuration=config) as (db, session):
+            session.add(db.Scenario(name="test_scenario", label="Test",
+                                    version='1.0.0', sequence=10))
+            session.flush()
+            session.add(db.Step(name="test_step", scenario="test_scenario",
+                                method_name_on_scenario="test"))
+            session.flush()
+            session.add(db.Transition(name="test_transition", sequence=1,
+                                      scenario="test_scenario",
+                                      from_step='test_step',
+                                      to_step='test_step',
+                                      method_name_on_scenario="test"))
+            session.flush()
+            db.update_all_scenarios()
+            self.assertFalse(session.query(db.Scenario).count())
+
+    def test_update_all_scenarios_with_job(self):
+        url = 'postgresql+psycopg2:///powerscan_scenario'
+        config = {'sqlalchemy_url': url}
+        self.drop_and_create_db_if_exist(url)
+        with dbmanager(configuration=config) as (db, session):
+            session.add(db.Scenario(name="test_scenario", label="Test",
+                                    version='1.0.0', sequence=10))
+            session.flush()
+            session.add(db.Step(name="test_step", scenario="test_scenario",
+                                method_name_on_scenario="test"))
+            session.add(db.Job(scenario_name="test_scenario"))
+            session.flush()
+            session.add(db.Transition(name="test_transition", sequence=1,
+                                      scenario="test_scenario",
+                                      from_step='test_step',
+                                      to_step='test_step',
+                                      method_name_on_scenario="test"))
+            session.flush()
+            with self.assertRaises(IntegrityError):
+                db.update_all_scenarios()
+
+    def test_update_all_scenarios_other_version(self):
+        url = 'postgresql+psycopg2:///powerscan_scenario'
+        config = {'sqlalchemy_url': url}
+        scenario = OneScenario(config)
+        scenarios = {'test': scenario}
+        self.drop_and_create_db_if_exist(url)
+        with dbmanager(configuration=config, scenarios=scenarios) as (db,
+                                                                      session):
+            scenario = session.query(db.Scenario).get('test')
+            self.assertEqual(scenario.version, '1.0.0')
+            scenario.version = '0.1.0'
+            session.flush()
+            db.update_all_scenarios()
+            self.assertEqual(scenario.version, '1.0.0')
