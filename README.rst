@@ -326,41 +326,44 @@ The step method return a dict with some key, this dict over writting their defau
 +----------------------+-----------------------------------------------------------+
 | buttons              | dict of buttons. The available button keys are:           |
 |                      |                                                           |
-|                      | * **<** or Scenario.LeftButton                            |
-|                      | * **=** or Scenario.MiddleButton                          |
-|                      | * **>** or Scenario.RightButton                           |
+|                      | * **<** or **Scenario.LeftButton**                        |
+|                      | * **=** or **Scenario.MiddleButton**                      |
+|                      | * **>** or **Scenario.RightButton**                       |
 |                      |                                                           |
 |                      | The value is the label to display, the maximum size is 5  |
 |                      | for **<** and **>**, and only 4 for **=**                 |
 +----------------------+-----------------------------------------------------------+
 | action_type          | Defined the type of action wanted for the user            |
 |                      |                                                           |
-|                      | * **no_action** or Scenario.NoAction : Return the         |
+|                      | * **no_action** or **Scenario.NoAction** : Return the     |
 |                      |   available scenarios                                     |
-|                      | * **menu** or Scenario.Menu : The display is seen as      |
+|                      | * **menu** or **Scenario.Menu** : The display is seen as  |
 |                      |   a Menu of selected action by buttons                    |
-|                      | * **quantity** or Scenario.Quantity : The display is seen |
-|                      |   as a confirmation of the quantity:                      |
+|                      | * **quantity** or **Scenario.Quantity** : The display is  |
+|                      |   seen as a confirmation of the quantity:                 |
 |                      |                                                           |
-|                      |   + **<** or Scenario.LeftButton: decrease the quantity   |
-|                      |   + **=** or Scenario.MiddleButton: confirm the quantity  |
-|                      |   + **>** or Scenario.RightButton: increase the quantity  |
+|                      |   + **<** or **Scenario.LeftButton**: decrease the        |
+|                      |     quantity                                              |
+|                      |   + **=** or **Scenario.MiddleButton**: confirm the       |
+|                      |     quantity                                              |
+|                      |   + **>** or **Scenario.RightButton**: increase the       |
+|                      |     quantity                                              |
 |                      |                                                           |
-|                      | * **scan** or Scenario.Scan : The display is seen as      |
+|                      | * **scan** or **Scenario.Scan**: The display is seen as   |
 |                      |   an ask, and the return waiting is a barcode (default)   |
-|                      | * **confirm** or Scenario.Confirm : The display is seen   |
-|                      |   as an ask and button as answer, the buttons must be     |
-|                      |   defined                                                 |
-|                      | * **stop** or Scenario.Stop : Stop the current job and    |
-|                      |  return the available scenario                            |
+|                      | * **confirm** or **Scenario.Confirm**: The display is     |
+|                      |   seen as an ask and button as answer, the buttons must   |
+|                      |   be defined                                              |
+|                      | * **stop** or **Scenario.Stop** : Stop the current job    |
+|                      |   and return the available scenario                       |
 +----------------------+-----------------------------------------------------------+
 | sound                | Sound played at this step:                                |
 |                      |                                                           |
-|                      | * **shorthight** or Scenario.ShortHight                   |
-|                      | * **shortlow** or Scenario.ShortLow                       |
-|                      | * **longlow** or Scenario.LongLow                         |
-|                      | * **goodread** or Scenario.GoodRead (default)             |
-|                      | * **badread** or Scenario.BadRead                         |
+|                      | * **shorthight** or **Scenario.ShortHight**               |
+|                      | * **shortlow** or **Scenario.ShortLow**                   |
+|                      | * **longlow** or **Scenario.LongLow**                     |
+|                      | * **goodread** or **Scenario.GoodRead** (default)         |
+|                      | * **badread** or **Scenario.BadRead**                     |
 +----------------------+-----------------------------------------------------------+
 
 
@@ -389,7 +392,7 @@ The decorator **powerscan_scenario.decorator.transition** is a helper to define 
         def bar(self, session, scanner, entry):
             # action to do
 
-        @transition(from=['foo'], to='bar', sequence=1)
+        @transition(froms=['foo'], to='bar', sequence=1)
         def check_transition_from_foo_to_var(self, session, scanner, entry):
             return ...  # True or False
 
@@ -398,10 +401,10 @@ These parameters of decorator are saved in the table **transition**
 +----------------------+-----------------------------------------------------------+
 | parameter            | Description                                               |
 +======================+===========================================================+
-| code                 | name of the transition for this scenario, if empty the    |
-|                      | code is the name of the method                            |
+| name                 | name of the transition for this scenario, if empty the    |
+|                      | name is the name of the method                            |
 +----------------------+-----------------------------------------------------------+
-| from                 | name of the steps before the transition, If the value is  |
+| froms                | name of the steps before the transition, If the value is  |
 |                      | None then all the step will be selected                   |
 +----------------------+-----------------------------------------------------------+
 | to                   | name of the step targeting by the transition              |
@@ -569,11 +572,11 @@ Example **Put products to their location in a warehouse**
         def stop(self, session, scanner, entry):
             return {'action_type': cls.Stop}
 
-        @transition(from=['scan_product'], to='stop', sequence=1)
+        @transition(froms=['scan_product'], to='stop', sequence=1)
         def transition_stop(self, session, scanner, entry):
             return entry == self.stop_code
 
-        @transition(from=['scan_product', 'scan_another_product'], to='scan_location', sequence=2)
+        @transition(froms=['scan_product', 'scan_another_product'], to='scan_location', sequence=2)
         def transition_product_ok(self, session, scanner, entry):
             query = session.query([self.ProductLocation])
             query = query.filter(self.ProductLocation.job == scanner.job)
@@ -581,15 +584,15 @@ Example **Put products to their location in a warehouse**
             query = query.filter(self.ProductLocation.quantity_count < self.ProductLocation.quantity)
             return query.count() > 0
 
-        @transition(from=['scan_product', 'scan_another_product'], to='scan_another_product', sequence=3)
+        @transition(froms=['scan_product', 'scan_another_product'], to='scan_another_product', sequence=3)
         def transition_product_ko(self, session, scanner, entry):
             return True
 
-        @transition(from=['scan_location'], to='scan_product', sequence=1)
+        @transition(froms=['scan_location'], to='scan_product', sequence=1)
         def transition_location_ok(self, session, scanner, entry):
             return scanner.properties['location'] == entry
 
-        @transition(from=['scan_location'], to='scan_location', sequence=2)
+        @transition(froms=['scan_location'], to='scan_location', sequence=2)
         def transition_product_ko(self, session, scanner, entry):
             return True
 

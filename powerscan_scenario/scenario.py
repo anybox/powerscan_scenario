@@ -6,6 +6,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from pkg_resources import iter_entry_points
+from . import common
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -34,6 +35,24 @@ class Scenario:
     sequence = 100
     dev = False
 
+    LeftButton = common.BUTTON_LEFT
+    MiddleButton = common.BUTTON_MIDDLE
+    RightButton = common.BUTTON_RIGHT
+
+    NoAction = common.NO_ACTION
+    Menu = common.ACTION_MENU
+    Quantity = common.ACTION_QUANTITY
+    Scan = common.ACTION_SCAN
+    Confirm = common.ACTION_CONFIRM
+    Stop = common.ACTION_STOP
+
+    ShortHight = common.SOUND_SHORTHIGHT
+    ShortLow = common.SOUND_SHORTLOW
+    LongLow = common.SOUND_LONGLOW
+    GoodRead = common.SOUND_GOODREAD
+    BadRead = common.SOUND_BADREAD
+    Wait = common.SOUND_WAIT
+
     def __init__(self, configuration):
         self.config = configuration
 
@@ -43,8 +62,45 @@ class Scenario:
     def update_tables(self, session, latest_version):
         pass  # TODO
 
-    def get_steps_and_transitions(self):
+    def get_steps_and_transitions(self):  # noqa
         steps = {}
         transitions = {}
+        step_methods = []
+        transition_methods = []
+
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            if hasattr(attr, 'is_a_step') and attr.is_a_step:
+                step_methods.append(attr.step_definition)
+            elif hasattr(attr, 'is_a_transition') and attr.is_a_transition:
+                transition_methods.append(attr.transition_definition)
+
+        if not step_methods:
+            raise ScenarioException('%r no step defined' % self)
+
+        if not transition_methods:
+            raise ScenarioException('%r no transition defined' % self)
+
+        for step in step_methods:
+            name = step['name']
+            if name in steps:
+                raise Exception(
+                    'In the scenarion %r, the step %r already exit' % (
+                        self, name))
+
+            steps[name] = step
+
+        for transition in transition_methods:
+            transition = transition.copy()
+            name = transition['name']
+            to_step = transition.pop('to')
+            for from_step in transition.pop('froms'):
+                if (name, to_step, from_step) in transitions:
+                    raise Exception(
+                        'In the sceranrio %r, transition %r already exit' % (
+                            self, (name, to_step, from_step)))
+
+                transition.update(dict(to_step=to_step, from_step=from_step))
+                transitions[(name, to_step, from_step)] = transition
 
         return steps, transitions

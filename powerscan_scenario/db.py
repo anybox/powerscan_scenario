@@ -6,7 +6,8 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from sqlalchemy import (create_engine, MetaData, Column, String, Integer,
-                        Boolean, ForeignKey, ForeignKeyConstraint, JSON)
+                        Boolean, ForeignKey, ForeignKeyConstraint, JSON, and_,
+                        or_)
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import NullPool
@@ -176,11 +177,11 @@ class DBManager:
         session.flush()
         steps, transitions = scenario_.get_steps_and_transitions()
         for step in steps:
-            self.add_step(scenario_name, **step)
+            self.add_step(scenario_name, steps[step])
 
         session.flush()
         for transition in transitions:
-            self.add_transition(scenario_name, **transition)
+            self.add_transition(scenario_name, transitions[transition])
 
         session.flush()
 
@@ -218,7 +219,7 @@ class DBManager:
 
     def add_step(self, scenario_name, step):
         self.session.add(self.Step(
-            name=scenario_name, **step))
+            scenario=scenario_name, **step))
 
     def update_step(self, step, step_definition):
         for attr in step_definition:
@@ -248,7 +249,7 @@ class DBManager:
 
     def add_transition(self, transition_name, transition):
         self.session.add(self.Transition(
-            name=transition_name, **transition))
+            scenario=transition_name, **transition))
 
     def update_transition(self, transition, transition_definition):
         for attr in transition_definition:
@@ -258,15 +259,26 @@ class DBManager:
         session = self.session
         query = session.query(self.Transition)
         query = query.filter(self.Transition.scenario == scenario.name)
-        query = query.filter(
-            self.Transition.name.notin_(list(transitions.keys())))
+        where_clause = []
+        for name, to_step, from_step in transitions:
+            where_clause.append(and_(
+                self.Transition.name == name,
+                self.Transition.to_step == to_step,
+                self.Transition.from_step == from_step))
+        query = query.filter(or_(*where_clause))
         for transition in query.all():
             self.delete_transition(transition.name)
 
         for transition_name in transitions:
             query = session.query(self.Transition)
             query = query.filter(self.Transition.scenario == scenario.name)
-            query = query.filter(self.Transition.name == transition_name)
+            where_clause = []
+            for name, to_step, from_step in transitions:
+                where_clause.append(and_(
+                    self.Transition.name == name,
+                    self.Transition.to_step == to_step,
+                    self.Transition.from_step == from_step))
+            query = query.filter(or_(*where_clause))
             transition = query.one_or_none()
             if transition is None:
                 self.add_transition(scenario.name, transitions[transition_name])
