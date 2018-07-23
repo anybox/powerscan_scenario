@@ -106,7 +106,7 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * choices :                                               |
 |                      |                                                           |
 |                      |   + BASE: use the datalogic base                          |
-|                      |   + CONSOLE: the datalogic base is remplaced by terminal  |
+|                      |   + CONSOL: the datalogic base is remplaced by terminal   |
 |                      |   + FILE: list of commande defined in file                |
 |                      |                                                           |
 |                      | * configfile key : mode                                   |

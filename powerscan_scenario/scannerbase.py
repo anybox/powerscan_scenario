@@ -224,5 +224,36 @@ class ScannerBase:
         return res
 
     def configure_scanner(self, scanner_code, configfile):
+        pass  # TODO
+
+
+class ScannerBaseConsol:
+
+    def close(self):
         pass
-        # TODO
+
+    def reception(self):
+        scan = input("Scanner number : ")
+        message = input("Scanner message : ")
+        return (scan, message)
+
+    def send(self, scan, message):
+        print("scan : ", scan)
+        print(message)
+
+    def format(self, action, data, compteur, buttons, sound):
+        res = ""
+        if action == "Menu":
+            for pos, line in enumerate(data):
+                if pos == compteur:
+                    res += " * : "
+                else:
+                    res += "   : "
+                res += line + '\n'
+        elif action in ("Message", "No Action"):
+            res += '\n'.join(data)
+        elif action in ("Confirmation"):
+            res += '\n'.join(data)
+            res += '\n' + str(buttons)
+
+        return res

@@ -7,9 +7,10 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from .config import (Configuration, get_argparse_config_from_entrypoint,
                      initialize_logging)
-from .scannerbase import ScannerBase
+from .scannerbase import ScannerBase, ScannerBaseConsol
 from .scenario import get_scenarios_from_entry_points
 from .db import DBManager
+from .engine import Engine
 from argparse import ArgumentParser
 from logging import getLogger
 
@@ -27,12 +28,17 @@ def powerscan_scenario():
     initialize_logging(config)
     scenarios = get_scenarios_from_entry_points(config)
     dbmanager = DBManager(scenarios=scenarios, configuration=config)
-    base = ScannerBase(serialport=config.get('serial_port'),
-                       baudrate=config.get('serial_baudrate'))
+    base = None
+    mode = config.get('mode')
+    if mode == 'CONSOL':
+        base = ScannerBaseConsol()
+    elif mode == 'FILE':
+        pass  # TODO
+    else:
+        base = ScannerBase(serialport=config.get('serial_port'),
+                           baudrate=config.get('serial_baudrate'))
     logger.info("Start powerscan scenario")
-    base, dbmanager
-    # TODO initialize db and alter it if need
-    # TODO Start ScenarScan
+    Engine(base, dbmanager).start()
 
 
 def powerscan_config():

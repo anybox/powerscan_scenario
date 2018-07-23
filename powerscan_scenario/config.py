@@ -101,7 +101,7 @@ def add_scenario_argparse_config(parser, default_configuration):
     group.add_argument('-u', '--sqlalchemy-url', dest='sqlalchemy_url',
                        help="SQLAlchemy url to connect to the database")
     group.add_argument('-m', '--mode', dest='mode', default='BASE',
-                       choices=['BASE', 'CONSOLE', 'FILE'],
+                       choices=['BASE', 'CONSOL', 'FILE'],
                        help="Mode to get the entry")
     group.add_argument('--mode-file', dest='mode_file',
                        help="Mode to get the entry")

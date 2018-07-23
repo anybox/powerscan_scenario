@@ -16,14 +16,10 @@ from .common import drop_and_create_db_if_exist
 @contextmanager
 def dbmanager(**kwargs):
     db = DBManager(**kwargs)
-    session = db.session
     try:
-        yield db, session
+        yield db
     finally:
-        session.rollback()
-        session.expunge_all()
-        session.close_all()
-        db.engine.dispose()
+        db.close()
 
 
 class TestDBManager(TestCase):
@@ -32,8 +28,8 @@ class TestDBManager(TestCase):
         url = 'postgresql+psycopg2:///powerscan_scenario'
         config = {'sqlalchemy_url': url}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config) as (db, session):
-            session.query(db.Scenario).count()  # table exist
+        with dbmanager(configuration=config) as db:
+            db.session.query(db.Scenario).count()  # table exist
 
     def test_create_tables_with_missing_sqlalchemy_url(self):
         with self.assertRaises(DBManagerException):
@@ -49,9 +45,8 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config, scenarios=scenarios) as (db,
-                                                                      session):
-            session.query(db.Scenario).count()  # table exist
+        with dbmanager(configuration=config, scenarios=scenarios) as db:
+            db.session.query(db.Scenario).count()  # table exist
 
         self.assertFalse(hasattr(scenario, 'TestProduct'))
 
@@ -61,17 +56,17 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config, scenarios=scenarios) as (db,
-                                                                      session):
-            session.query(db.Scenario).count()  # table exist
+        with dbmanager(configuration=config, scenarios=scenarios) as db:
+            db.session.query(db.Scenario).count()  # table exist
             self.assertTrue(hasattr(scenario, 'TestProduct'))
-            session.query(scenario.TestProduct).count()  # table exist
+            db.session.query(scenario.TestProduct).count()  # table exist
 
     def test_update_all_scenarios(self):
         url = 'postgresql+psycopg2:///powerscan_scenario'
         config = {'sqlalchemy_url': url}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config) as (db, session):
+        with dbmanager(configuration=config) as db:
+            session = db.session
             session.add(db.Scenario(name="test_scenario", label="Test",
                                     version='1.0.0', sequence=10))
             session.flush()
@@ -91,7 +86,8 @@ class TestDBManager(TestCase):
         url = 'postgresql+psycopg2:///powerscan_scenario'
         config = {'sqlalchemy_url': url}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config) as (db, session):
+        with dbmanager(configuration=config) as db:
+            session = db.session
             session.add(db.Scenario(name="test_scenario", label="Test",
                                     version='1.0.0', sequence=10))
             session.flush()
@@ -114,12 +110,11 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config, scenarios=scenarios) as (db,
-                                                                      session):
-            scenario = session.query(db.Scenario).get('test')
+        with dbmanager(configuration=config, scenarios=scenarios) as db:
+            scenario = db.session.query(db.Scenario).get('test')
             self.assertEqual(scenario.version, '1.0.0')
             scenario.version = '0.1.0'
-            session.flush()
+            db.session.flush()
             db.update_all_scenarios()
             self.assertEqual(scenario.version, '1.0.0')
 
@@ -129,8 +124,8 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config, scenarios=scenarios) as (db,
-                                                                      session):
+        with dbmanager(configuration=config, scenarios=scenarios) as db:
+            session = db.session
             session.add(db.Step(name='test_step', scenario='test',
                                 method_name_on_scenario='test'))
             session.flush()
@@ -146,8 +141,8 @@ class TestDBManager(TestCase):
         scenario = OneScenario(config)
         scenarios = {'test': scenario}
         drop_and_create_db_if_exist(url)
-        with dbmanager(configuration=config, scenarios=scenarios) as (db,
-                                                                      session):
+        with dbmanager(configuration=config, scenarios=scenarios) as db:
+            session = db.session
             session.add(db.Transition(name='test_transition', scenario='test',
                                       from_step='stop', to_step='stop',
                                       sequence=1,

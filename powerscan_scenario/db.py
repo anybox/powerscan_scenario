@@ -43,6 +43,12 @@ class DBManager:
         self.Session = scoped_session(session_factory)
         self.update_all_scenarios()
 
+    def close(self):
+        self.session.rollback()
+        self.session.expunge_all()
+        self.session.close_all()
+        self.engine.dispose()
+
     @property
     def session(self):
         return self.Session()
