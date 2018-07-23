@@ -100,8 +100,14 @@ def add_scenario_argparse_config(parser, default_configuration):
                        help="Allow the scenario in mode dev")
     group.add_argument('-u', '--sqlalchemy-url', dest='sqlalchemy_url',
                        help="SQLAlchemy url to connect to the database")
+    group.add_argument('-m', '--mode', dest='mode', default='BASE',
+                       choices=['BASE', 'CONSOLE', 'FILE'],
+                       help="Mode to get the entry")
+    group.add_argument('--mode-file', dest='mode_file',
+                       help="Mode to get the entry")
     default_configuration.update(dict(serial_port='/dev/ttyUSB0',
-                                      serial_baudrate=38400))
+                                      serial_baudrate=38400,
+                                      mode='BASE'))
 
 
 def add_config_argparse_config(parser, default_configuration):

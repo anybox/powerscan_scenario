@@ -100,6 +100,22 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      | * default :                                               |
 |                      | * configfile key : sqlalchemy_url                         |
 +----------------------+-----------------------------------------------------------+
+| -m --mode            | mode for scanner base                                     |
+|                      |                                                           |
+|                      | * default : base                                          |
+|                      | * choices :                                               |
+|                      |                                                           |
+|                      |   + BASE: use the datalogic base                          |
+|                      |   + CONSOLE: the datalogic base is remplaced by terminal  |
+|                      |   + FILE: list of commande defined in file                |
+|                      |                                                           |
+|                      | * configfile key : mode                                   |
++----------------------+-----------------------------------------------------------+
+| --mode-file          | File loaded by **mode=FILE** options                      |
+|                      |                                                           |
+|                      | * default :                                               |
+|                      | * configfile key : mode_file                              |
++----------------------+-----------------------------------------------------------+
 | -l --logging-level   | logging level general status                              |
 |                      |                                                           |
 |                      | * default : INFO                                          |

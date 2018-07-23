@@ -82,7 +82,8 @@ class TestScenarioArgParse(GiveParser, TestCase):
         add_scenario_argparse_config(self.parser, default_configuration)
         self.assertEqual(default_configuration,
                          {'serial_port': '/dev/ttyUSB0',
-                          'serial_baudrate': 38400})
+                          'serial_baudrate': 38400,
+                          'mode': 'BASE'})
 
     def test_add_logging_argparse_config(self):
         default_configuration = {}
