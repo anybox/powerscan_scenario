@@ -48,6 +48,7 @@ class DBManager:
         self.session.expunge_all()
         self.session.close_all()
         self.engine.dispose()
+        logger.info('Close %r', self)
 
     @property
     def session(self):

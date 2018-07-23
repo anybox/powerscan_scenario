@@ -47,7 +47,7 @@ class ScannerBase:
         """
         self.serial.sendBreak()
         self.serial.close()
-        self.logger.debug("The connection is closed")
+        self.logger.info("The connection is closed")
 
     def reception(self):
         """
@@ -230,7 +230,7 @@ class ScannerBase:
 class ScannerBaseConsol:
 
     def close(self):
-        pass
+        logger.info('Close %r', self)
 
     def reception(self):
         scan = input("Scanner number : ")
