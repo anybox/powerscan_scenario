@@ -21,7 +21,6 @@ class OneScenario(Scenario):
     version = '1.0.0'
     sequence = 50
     dev = True
-    multi_job = True
     scan_stop = "stop"
 
     def create_models(self, SQLBase):
@@ -44,6 +43,7 @@ class OneScenario(Scenario):
             if not product:
                 product = self.TestProduct(scan=scan)
                 session.add(product)
+                session.flush()
 
             product.qty += 1
 

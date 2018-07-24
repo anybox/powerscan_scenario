@@ -244,7 +244,7 @@ class ScannerBaseConsol:
 
     def format(self, action_type=None, display=None, counter=None,
                buttons=None, sound=None):
-        res = ""
+        res = "Sound : %r\n" % sound
         if action_type == ACTION_MENU:
             for pos, line in enumerate(display):
                 if pos == counter:
@@ -254,9 +254,11 @@ class ScannerBaseConsol:
                 res += str(line) + '\n'
         elif action_type in (ACTION_SCAN, NO_ACTION):
             res += '\n'.join(display)
-        elif action_type in (ACTION_CONFIRM, ACTION_STOP):
+        elif action_type == ACTION_CONFIRM:
             res += '\n'.join(display)
             res += '\n' + str(buttons)
+        elif action_type == ACTION_STOP:
+            res += '\n Stop'
         elif action_type == ACTION_QUANTITY:
             res += '\n'.join(display)
             res += '\n'.join(counter)

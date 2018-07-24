@@ -101,6 +101,12 @@ class Process:
         self.session.commit()
         self.session.close()
 
+    def reset_job(self):
+        pass
+
+    def clean_scanner(self):
+        pass
+
     def display_error(self):
         self.next_state = dict(
             action_type=ACTION_CONFIRM,
@@ -152,7 +158,7 @@ class Process:
                 self.display_job_menu(scenario)
                 return
             else:
-                job = self.create_job(scenario_label)
+                job = self.create_job(scenario.name)
         elif job_label:
             query = self.session.query(self.dbmanager.job)
             query = query.filter_by(label=job_label)
@@ -171,6 +177,20 @@ class Process:
         self.session.flush()
         self.execute_step(step, None)
 
+    def get_next_step(self, scan):
+        query = self.session.query(self.dbmanager.Transition)
+        query = query.filter_by(scenario=self.scanner.scenario,
+                                from_step=self.scanner.step)
+        query = query.order_by(self.dbmanager.Transition.sequence)
+        for transition in query.all():
+            if self.execute_transition(transition, scan):
+                query = self.session.query(self.dbmanager.Step)
+                query = query.filter_by(scenario=self.scanner.scenario,
+                                        name=transition.to_step)
+                return query.one()
+        else:
+            return None
+
     def execute_step(self, step, scan):
         scenario = self.dbmanager.scenarios[step.scenario]
         self.next_state = dict(
@@ -183,6 +203,11 @@ class Process:
             self.is_final_step = True
 
         self.scanner.step = step.name
+
+    def execute_transition(self, transition, scan):
+        scenario = self.dbmanager.scenarios[transition.scenario]
+        return getattr(scenario, transition.method_name_on_scenario)(
+                self.session, self.scanner, scan)
 
     def _execute_menu(self, scan):
         display = self.next_state['display']
@@ -215,7 +240,7 @@ class Process:
                 query = self.session.query(self.dbmanager.Step)
                 query = query.filter_by(scenario=self.scanner.scenario,
                                         step=self.scanner.step)
-                self.execute_step(query.one())
+                self.execute_step(query.one(), scan)
 
     def _execute_scan(self, scan):
         if scan in (BUTTON_LEFT, BUTTON_RIGHT):
@@ -225,7 +250,7 @@ class Process:
         else:
             step = self.get_next_step(scan)
             if step:
-                self.execute_step(step)
+                self.execute_step(step, scan)
             else:
                 self.display_error()
 
@@ -237,7 +262,7 @@ class Process:
         elif scan == BUTTON_MIDDLE:
             step = self.get_next_step(self.next_state['counter'])
             if step:
-                self.execute_step(step)
+                self.execute_step(step, scan)
             else:
                 self.display_error()
 
@@ -245,7 +270,7 @@ class Process:
         if self.next_state['buttons'].get(scan, None) is not None:
             step = self.get_next_step(self.next_state['counter'])
             if step:
-                self.execute_step(step)
+                self.execute_step(step, scan)
             else:
                 self.display_error()
 
@@ -257,9 +282,7 @@ class Process:
         if query.count() == 0:
             self.is_final_step = True
 
-        self.next_state = dict(
-            display=['Quitte le', 'scenario'], action_type=NO_ACTION, counter=0,
-            buttons={}, sound=SOUND_GOODREAD)
+        self.display_scenario_menu()
 
     def _execute(self, scan):
         action = self.next_state['action_type']
