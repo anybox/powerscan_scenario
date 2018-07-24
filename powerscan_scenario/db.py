@@ -42,6 +42,7 @@ class DBManager:
         session_factory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(session_factory)
         self.update_all_scenarios()
+        self.session.commit()
 
     def close(self):
         self.session.rollback()
@@ -81,6 +82,7 @@ class DBManager:
             label = Column(String, nullable=False)
             version = Column(String, nullable=False)
             dev = Column(Boolean, default=False)
+            multi_job = Column(Boolean, default=False)
 
         self.Scenario = Scenario
 
@@ -132,6 +134,7 @@ class DBManager:
             __tablename__ = "job"
 
             id = Column(Integer, primary_key=True, nullable=False)
+            label = Column(String)
             scenario_name = Column(
                 String, ForeignKey('scenario.name', ondelete="RESTRICT"),
                 nullable=False)
@@ -152,6 +155,7 @@ class DBManager:
             step = Column(String)
             properties = Column(JSON, default={})
             step_result = Column(JSON, default={})
+            error = Column(Boolean, default=False)
 
             __table_args__ = (
                 ForeignKeyConstraint(
@@ -180,7 +184,7 @@ class DBManager:
         session.add(self.Scenario(
             name=scenario_name,
             **{x: getattr(scenario_, x)
-               for x in ('label', 'sequence', 'version', 'dev')}))
+               for x in ('label', 'sequence', 'version', 'dev', 'multi_job')}))
         session.flush()
         steps, transitions = scenario_.get_steps_and_transitions()
         for step in steps:
@@ -198,7 +202,7 @@ class DBManager:
         if scenario_.version != scenario.version:
             scenario_.update_tables(session, scenario.version)
 
-        for attr in ('label', 'sequence', 'version', 'dev'):
+        for attr in ('label', 'sequence', 'version', 'dev', 'multi_job'):
             setattr(scenario, attr, getattr(scenario_, attr))
 
         steps, transitions = scenario_.get_steps_and_transitions()

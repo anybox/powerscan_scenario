@@ -107,14 +107,8 @@ This script load the scenario(s) from the entry points  and loop to wait the sca
 |                      |                                                           |
 |                      |   + BASE: use the datalogic base                          |
 |                      |   + CONSOL: the datalogic base is remplaced by terminal   |
-|                      |   + FILE: list of commande defined in file                |
 |                      |                                                           |
 |                      | * configfile key : mode                                   |
-+----------------------+-----------------------------------------------------------+
-| --mode-file          | File loaded by **mode=FILE** options                      |
-|                      |                                                           |
-|                      | * default :                                               |
-|                      | * configfile key : mode_file                              |
 +----------------------+-----------------------------------------------------------+
 | -l --logging-level   | logging level general status                              |
 |                      |                                                           |
@@ -223,7 +217,7 @@ Each scenario have to inherit from **powerscan_scenario.Scenario**.
     The name of the entry point is the code of the scenario, This code is the primary key
     of the table **scenario**
 
-These attributes are saved in the table **scenario**, and are required
+These attributes are saved in the table **scenario**
 
 +----------------------+-----------------------------------------------------------+
 | Attribute            | Description                                               |
@@ -235,7 +229,10 @@ These attributes are saved in the table **scenario**, and are required
 | sequence             | Order the scenario in the available scenario list (100)   |
 +----------------------+-----------------------------------------------------------+
 | dev                  | Boolean if **True** the scenario will be not displayed in |
-|                      | the menu of the available scenarios list.                 |
+|                      | the menu of the available scenarios list. default False   |
++----------------------+-----------------------------------------------------------+
+| multi_job            | Boolean if **True** the scenario will be treat by more    |
+|                      | than one job. default False                               |
 +----------------------+-----------------------------------------------------------+
 
 Some hooks can be overwritten 

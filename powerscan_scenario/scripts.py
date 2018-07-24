@@ -38,7 +38,7 @@ def powerscan_scenario():
         base = ScannerBase(serialport=config.get('serial_port'),
                            baudrate=config.get('serial_baudrate'))
     logger.info("Start powerscan scenario")
-    Engine(base, dbmanager).start()
+    Engine(config, base, dbmanager).start()
 
 
 def powerscan_config():

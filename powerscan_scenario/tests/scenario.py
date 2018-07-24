@@ -21,6 +21,7 @@ class OneScenario(Scenario):
     version = '1.0.0'
     sequence = 50
     dev = True
+    multi_job = True
     scan_stop = "stop"
 
     def create_models(self, SQLBase):
@@ -32,6 +33,9 @@ class OneScenario(Scenario):
             qty = Column(Integer, default=0)
 
         self.TestProduct = TestProduct
+
+    def set_job_label(self, job):
+        job.label = 'Test %d' % job.id
 
     @step(is_first_step=True)
     def scan(self, session, scanner, scan):

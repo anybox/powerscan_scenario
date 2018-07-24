@@ -34,6 +34,7 @@ class Scenario:
     label = None
     sequence = 100
     dev = False
+    multi_job = False
 
     LeftButton = common.BUTTON_LEFT
     MiddleButton = common.BUTTON_MIDDLE
@@ -61,6 +62,9 @@ class Scenario:
 
     def update_tables(self, session, latest_version):
         pass  # TODO
+
+    def set_job_label(self, job):
+        raise ScenarioException("No 'set_job_label' on %r" % self)
 
     def get_steps_and_transitions(self):  # noqa
         steps = {}

@@ -197,26 +197,27 @@ class ScannerBase:
 
         return res
 
-    def format(self, action_type, data, counter, buttons, sound):
+    def format(self, action_type=None, display=None, counter=None,
+               buttons=None, sound=None):
         """
-        cast  the data in function the action_type, counter and buttons.
+        cast  the display in function the action_type, counter and buttons.
         The sound is an helper for the final user
 
         :param action_type: Available action defined in common.py
-        :param data: message to cast to send to the scanner
+        :param display: message to cast to send to the scanner
         :param counter: counter use to determinate the cursor
         :param buttons: dict with the buttons labels
-        :param sound: sound to play with the data
+        :param sound: sound to play with the display
         """
         res = ESC + "[2J"
         if action_type == ACTION_MENU:
-            res += self.format_menu(data, counter)
+            res += self.format_menu(display, counter)
         elif action_type in (ACTION_SCAN, NO_ACTION):
-            res += self.format_scan(data)
+            res += self.format_scan(display)
         elif action_type in (ACTION_CONFIRM, ACTION_STOP):
-            res += self.format_confirm(data, buttons)
+            res += self.format_confirm(display, buttons)
         elif action_type == ACTION_QUANTITY:
-            res += self.format_quantity(data, counter)
+            res += self.format_quantity(display, counter)
 
         res += ESC
         res += self.format_sound(sound)
@@ -237,23 +238,27 @@ class ScannerBaseConsol:
         message = input("Scanner message : ")
         return (scan, message)
 
-    def send(self, scan, message):
-        print("scan : ", scan)
+    def send(self, scanner_code, message):
+        print("scanner code : ", scanner_code)
         print(message)
 
-    def format(self, action, data, compteur, buttons, sound):
+    def format(self, action_type=None, display=None, counter=None,
+               buttons=None, sound=None):
         res = ""
-        if action == "Menu":
-            for pos, line in enumerate(data):
-                if pos == compteur:
+        if action_type == ACTION_MENU:
+            for pos, line in enumerate(display):
+                if pos == counter:
                     res += " * : "
                 else:
                     res += "   : "
-                res += line + '\n'
-        elif action in ("Message", "No Action"):
-            res += '\n'.join(data)
-        elif action in ("Confirmation"):
-            res += '\n'.join(data)
+                res += str(line) + '\n'
+        elif action_type in (ACTION_SCAN, NO_ACTION):
+            res += '\n'.join(display)
+        elif action_type in (ACTION_CONFIRM, ACTION_STOP):
+            res += '\n'.join(display)
             res += '\n' + str(buttons)
+        elif action_type == ACTION_QUANTITY:
+            res += '\n'.join(display)
+            res += '\n'.join(counter)
 
         return res
