@@ -6,7 +6,8 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from unittest import TestCase
-from ..scripts import initialize_config  # , get_engine
+from ..scripts import initialize_config, get_engine
+from .common import drop_and_create_db_if_exist
 
 
 class TestScript(TestCase):
@@ -28,11 +29,13 @@ class TestScript(TestCase):
             'sqlalchemy_url': 'postgresql+psycopg2:///powerscan_scenario',
         })
 
-    # def test_get_engine(self):
-    #     config = {
-    #         'mode': 'CONSOL',
-    #         'allow_dev': True,
-    #         'logging_level': 'DEBUG',
-    #         'sqlalchemy_url': 'postgresql+psycopg2:///powerscan_scenario',
-    #     }
-    #     engine = get_engine(config)
+    def test_get_engine(self):
+        url = 'postgresql+psycopg2:///powerscan_scenario'
+        config = {
+            'mode': 'CONSOL',
+            'allow_dev': True,
+            'logging_level': 'DEBUG',
+            'sqlalchemy_url': url,
+        }
+        drop_and_create_db_if_exist(url)
+        get_engine(config)

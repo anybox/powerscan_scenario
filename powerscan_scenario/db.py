@@ -188,7 +188,12 @@ class DBManager:
             **{x: getattr(scenario_, x)
                for x in ('label', 'sequence', 'version', 'dev', 'multi_job')}))
         session.flush()
-        steps, transitions = scenario_.get_steps_and_transitions()
+        try:
+            steps, transitions = scenario_.get_steps_and_transitions()
+        except Exception:
+            self.close()
+            raise
+
         for step in steps:
             self.add_step(scenario_name, steps[step])
 
