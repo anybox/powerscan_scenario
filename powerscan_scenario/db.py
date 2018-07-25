@@ -21,7 +21,7 @@ class DBManagerException(Exception):
 
 class DBManager:
 
-    def __init__(self, configuration=None, scenarios=None):
+    def __init__(self, configuration=None, scenarios=None, **options):
         if configuration is None:
             raise DBManagerException('No configuration to initialize DBManager')
 
@@ -30,7 +30,7 @@ class DBManager:
             scenarios = {}  # in this case only the base model will be created
 
         self.scenarios = scenarios
-        self.connect_to_database()
+        self.connect_to_database(options)
         self.create_model_scenario()
         self.create_model_step()
         self.create_model_transition()
@@ -54,7 +54,7 @@ class DBManager:
     def session(self):
         return self.Session()
 
-    def connect_to_database(self):
+    def connect_to_database(self, options):
         if 'sqlalchemy_url' not in self.config:
             raise DBManagerException('No sqlalchemy_url in the configuration')
 
@@ -62,6 +62,9 @@ class DBManager:
             'strategy': 'threadlocal',
             'isolation_level': 'SERIALIZABLE',
         }
+        if options:
+            kwargs.update(options)
+
         url = self.config['sqlalchemy_url']
         if url.startswith('sqlite:'):
             kwargs.setdefault('poolclass', NullPool)

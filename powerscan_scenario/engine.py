@@ -34,16 +34,19 @@ class Engine:
                 if scannercode:
                     threading.Thread(
                         target=self.process, args=(scannercode, scan)).start()
-                    pass  # TODO async process
 
-                sleep(0.01)
             except KeyboardInterrupt:
                 self.engine_loop = False
             except Exception as e:
                 logger.exception(e)
+            finally:
+                sleep(0.01)
 
         self.scanner_base.close()
         self.dbmanager.close()
+
+    def stop(self):
+        self.engine_loop = False
 
     def process(self, scannercode, scan):
         Process(self.config, self.scanner_base, self.dbmanager,
@@ -52,9 +55,9 @@ class Engine:
 
 class Process:
 
-    __new = "## New !! ##"
-    __reload = "## Reload !! ##"
-    __cancel = "## Cancel !! ##"
+    _new = "## New !! ##"
+    _reload = "## Reload !! ##"
+    _cancel = "## Cancel !! ##"
 
     def __init__(self, configuration, scanner_base, dbmanager, scannercode):
         self.config = configuration
@@ -127,7 +130,7 @@ class Process:
 
         query = query.order_by(self.dbmanager.Scenario.sequence)
         self.next_state = dict(
-            display=[x.label for x in query.all()] + [self.__reload],
+            display=[x.label for x in query.all()] + [self._reload],
             action_type=ACTION_MENU, counter=0, buttons={},
             sound=SOUND_GOODREAD)
 
@@ -137,7 +140,7 @@ class Process:
         query = query.order_by(self.dbmanager.Job.id)
         self.next_state = dict(
             display=([x.label for x in query.all()] +
-                     [self.__new, self.__cancel]),
+                     [self._new, self._cancel]),
             action_type=ACTION_MENU, counter=0, buttons={},
             sound=SOUND_GOODREAD)
 
@@ -221,14 +224,14 @@ class Process:
         elif scan == BUTTON_MIDDLE:
             label = display[self.next_state['counter']]
             if not self.scanner.scenario:
-                if label == self.__reload:
+                if label == self._reload:
                     self.display_scenario_menu()
                 else:
                     self.run_job(scenario_label=label)
             elif not self.scanner.job:
-                if label == self.__cancel:
+                if label == self._cancel:
                     self.display_scenario_menu()
-                elif label == self.__new:
+                elif label == self._new:
                     job = self.create_job(self.scanner.scenario)
                     scenario = self.dbmanager.scenarios[
                         self.scanner.scenario]

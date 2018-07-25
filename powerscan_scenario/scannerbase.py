@@ -6,6 +6,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import serial
+from time import sleep
 from .common import (LF, CR, ESC, ACTION_MENU, ACTION_CONFIRM, ACTION_STOP,
                      ACTION_SCAN, NO_ACTION, ACTION_QUANTITY, SOUND_SHORTHIGHT,
                      SOUND_SHORTLOW, SOUND_LONGLOW, SOUND_GOODREAD,
@@ -269,5 +270,33 @@ class ScannerBaseConsol:
         return res
 
 
-class TestingScannerBase(ScannerBaseFormat):
-    pass
+class TestingScannerBase:
+
+    def __init__(self):
+        self.from_scanners = []  # list of tuple (scanner code, scan)
+        self.to_scanners = {}
+
+    def close(self):
+        pass
+
+    def reception(self):
+        if self.from_scanners:
+            return self.from_scanners.pop(0)
+
+        return (None, None)
+
+    def format(self, **kwargs):
+        return kwargs
+
+    def send(self, scanner_code, message):
+        self.to_scanners[scanner_code] = message
+
+    def sent_to(self, scanner_code):
+        while True:
+            if scanner_code in self.to_scanners:
+                return self.to_scanners.pop(scanner_code)
+
+            sleep(0.01)
+
+    def sent_from_base(self, scanner_code, message):
+        self.from_scanners.append((scanner_code, message))
