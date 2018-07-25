@@ -451,45 +451,25 @@ Existing SQLAlchemy's models
 
 This model saved the scenario coming from the entry points ``powerscan_scenario.scenario``.
 
-.. warning::
-
-    This model is readonly, the data can not be modify by the ORM.
-
 **powerscan_scenario.models.Step**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This model saved the step coming from the decorator step.
-
-.. warning::
-
-    This model is readonly, the data can not be modify by the ORM.
 
 **powerscan_scenario.models.Transition**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This model saved the transition coming from the decorator transition.
 
-.. warning::
-
-    This model is readonly, the data can not be modify by the ORM.
-
 **powerscan_scenario.models.Job**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This model saved the job for one scenario.
 
-.. warning::
-
-    This model is readonly, only the column properties (json) is available to write.
-
 **powerscan_scenario.models.Scanner**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This model saved the scanner used for one job. The entries is created by powerscan_scenario.
-
-.. warning::
-
-    This model is readonly, only the column properties (json) is available to write.
 
 Example **Put products to their location in a warehouse**
 ---------------------------------------------------------
