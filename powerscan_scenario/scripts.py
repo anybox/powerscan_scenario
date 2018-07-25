@@ -17,40 +17,45 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-def powerscan_scenario():
+def initialize_config(section=None, description=None,
+                      entry_point=None, parser_args=None):
     config = Configuration()
-    config.set_configfile_section('POWERSCAN_SCENARIO')
-    parser = ArgumentParser(description='powerscan scenario')
-    get_argparse_config_from_entrypoint(
-        parser, 'powerscan_scenario.argparse', config)
-    args = parser.parse_args()
+    config.set_configfile_section(section)
+    parser = ArgumentParser(description=description)
+    get_argparse_config_from_entrypoint(parser, entry_point, config)
+    args = parser.parse_args(parser_args)
     config.update(dict(args._get_kwargs()))
     initialize_logging(config)
+    return config
+
+
+def get_engine(config):
     scenarios = get_scenarios_from_entry_points(config)
     dbmanager = DBManager(scenarios=scenarios, configuration=config)
-    base = None
     mode = config.get('mode')
     if mode == 'CONSOL':
         base = ScannerBaseConsol()
-    elif mode == 'FILE':
-        pass  # TODO
     else:
         base = ScannerBase(serialport=config.get('serial_port'),
                            baudrate=config.get('serial_baudrate'))
     logger.info("Start powerscan scenario")
-    Engine(config, base, dbmanager).start()
+    return Engine(config, base, dbmanager)
+
+
+def powerscan_scenario():
+    config = initialize_config(
+        description='powerscan scenario',
+        section='POWERSCAN_SCENARIO',
+        entry_point='powerscan_scenario.argparse')
+    get_engine(config).start()
 
 
 def powerscan_config():
-    config = Configuration()
-    config.set_configfile_section('POWERSCAN_CONFIG')
-    parser = ArgumentParser(
-        description='powerscan : update scanner configuration')
-    get_argparse_config_from_entrypoint(
-        parser, 'powerscan_config.argparse', config)
-    args = parser.parse_args()
-    config.update(dict(args._get_kwargs()))
-    initialize_logging(config)
+    config = initialize_config(
+        description='powerscan : update scanner configuration',
+        section='POWERSCAN_CONFIG',
+        entry_point='powerscan_config.argparse')
+
     base = ScannerBase(serialport=config.get('serial_port'),
                        baudrate=config.get('serial_baudrate'))
     logger.info("Start powerscan config")
