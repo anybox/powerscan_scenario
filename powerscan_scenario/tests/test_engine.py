@@ -24,4 +24,5 @@ class TestEngine(TestCase):
         dbmanager = DBManager(configuration=config, scenarios=scenarios)
         base = TestingScannerBase()
         engine = Engine(config, base, dbmanager)
+        engine
         dbmanager.close()
