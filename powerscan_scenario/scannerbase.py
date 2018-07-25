@@ -16,64 +16,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-class ScannerBase:
-
-    def __init__(self, serialport=None, baudrate=None):
-        """
-        Open a serial connection rs232 or USB
-
-        :param serialport: serial port connected with the scanner base
-        :param baudrate: connection speed with the scanner base
-        """
-        logger.info("Connection with scanner base: port=%r baudrate=%r",
-                    serialport, baudrate)
-        try:
-            self.serial = serial.Serial(serialport)
-            self.serial.baudrate = baudrate
-            if self.serial.isOpen():
-                logger.debug(
-                    'The serial port has already used, force the close')
-                self.close()
-
-            self.serial.open()
-        except serial.serialutil.SerialException as e:
-            logger.critical(
-                "Connection failed with the scanner base")
-            exit(0)
-
-    def close(self):
-        """
-        Close the connection with the scanner base
-        """
-        self.serial.sendBreak()
-        self.serial.close()
-        self.logger.info("The connection is closed")
-
-    def reception(self):
-        """
-        Read the serial and identify which scan send data
-        @return: Scanner number and message
-        """
-        res = self.serial.readline()
-        (scanner, message) = (res[0:4], res[4:])
-        message = message.replace(CR, '').replace(LF, '')
-        self.logger.debug(
-            "Received from the scanner base : scanner=%r, message=%r",
-            scanner, message)
-        return (scanner, message)
-
-    def send(self, scanner, message):
-        """
-        Send to the scanner the current message by the Serial connection
-        with scanner base
-        :param scanner: numero du scanner
-        :param message: message a envoyer
-        """
-        data = scanner + message
-        self.logger.debug(
-            "Send to the scanner (%r) the message : %r",
-            scanner, message)
-        self.serial.write(data)
+class ScannerBaseFormat:
 
     def format_menu(self, data, counter):
         """
@@ -224,6 +167,66 @@ class ScannerBase:
         res += CR
         return res
 
+
+class ScannerBase(ScannerBaseFormat):
+
+    def __init__(self, serialport=None, baudrate=None):
+        """
+        Open a serial connection rs232 or USB
+
+        :param serialport: serial port connected with the scanner base
+        :param baudrate: connection speed with the scanner base
+        """
+        logger.info("Connection with scanner base: port=%r baudrate=%r",
+                    serialport, baudrate)
+        try:
+            self.serial = serial.Serial(serialport)
+            self.serial.baudrate = baudrate
+            if self.serial.isOpen():
+                logger.debug(
+                    'The serial port has already used, force the close')
+                self.close()
+
+            self.serial.open()
+        except serial.serialutil.SerialException as e:
+            logger.critical(
+                "Connection failed with the scanner base")
+            exit(0)
+
+    def close(self):
+        """
+        Close the connection with the scanner base
+        """
+        self.serial.sendBreak()
+        self.serial.close()
+        self.logger.info("The connection is closed")
+
+    def reception(self):
+        """
+        Read the serial and identify which scan send data
+        @return: Scanner number and message
+        """
+        res = self.serial.readline()
+        (scanner, message) = (res[0:4], res[4:])
+        message = message.replace(CR, '').replace(LF, '')
+        self.logger.debug(
+            "Received from the scanner base : scanner=%r, message=%r",
+            scanner, message)
+        return (scanner, message)
+
+    def send(self, scanner, message):
+        """
+        Send to the scanner the current message by the Serial connection
+        with scanner base
+        :param scanner: numero du scanner
+        :param message: message a envoyer
+        """
+        data = scanner + message
+        self.logger.debug(
+            "Send to the scanner (%r) the message : %r",
+            scanner, message)
+        self.serial.write(data)
+
     def configure_scanner(self, scanner_code, configfile):
         pass  # TODO
 
@@ -264,3 +267,7 @@ class ScannerBaseConsol:
             res += '\n'.join(counter)
 
         return res
+
+
+class TestingScannerBase(ScannerBaseFormat):
+    pass
